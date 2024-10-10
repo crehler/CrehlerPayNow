@@ -1,0 +1,18 @@
+<div>
+
+    <sw-button :disabled="false" variant="primary" :square="false" :block="false" :isLoading="isLoading"
+               @click="onTestCredentials">
+        TEST API
+    </sw-button>
+
+    <div class="crehler-configuration-url" >
+        <sw-text-field  disabled="yes" :copyable="true" :copyableTooltip="true" :value="notificationUrl">
+            <template v-slot:label> {{ $tc('pay-now-order.url.notification') }}</template>
+        </sw-text-field>
+    </div>
+    <div class="crehler-configuration-url" >
+        <sw-text-field  disabled="yes" :copyable="true" :copyableTooltip="true" :value="returnUrl">
+            <template v-slot:label>{{ $tc('pay-now-order.url.return') }}</template>
+        </sw-text-field>
+    </div>
+</div>

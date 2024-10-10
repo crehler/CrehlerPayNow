@@ -1,0 +1,33 @@
+<div class="paynow-">
+    {% set payNowBankSelectionOptions = {
+        paymentId: payment.id
+    } %}
+
+    <div class="paynow---list"
+         data-pay-now-payment-methods="true"
+         data-pay-now-payment-methods-options='{{ payNowBankSelectionOptions|json_encode }}' >
+        {% for bank in bankList %}
+
+            <div class="paynow--list-item-container paynow---list-item-bank-{{ bank.id }} {% if bank.id == customer.customFields.pay_now_default_payment_selected_bank %}is--active{% endif %} {% if bank.status == "DISABLED" %}disabled-method{% endif %}">
+                <input
+                        type="radio"
+                        id="paynow--bank-input-{{ bank.id }}"
+                        class="paynow--bank-input {% if bank.status == "DISABLED" %}disabled-method{% endif %}"
+                        name="payNowBank"
+                        value="{{ bank.id }}"
+                        data-bank="{{ bank.id }}"
+                        {% if bank.id == customer.customFields.pay_now_default_payment_selected_bank %}checked{% endif %}
+                />
+                <label
+                        class="paynow--list-item paynow__list-item-{{ bank.id }} paynow--bank-input {% if bank.status == "DISABLED" %}disabled-method{% endif %}"
+                        for="paynow--bank-input-{{ bank.id }}"
+                        data-payment-selector="payment_mean{{ payment.id}}"
+                        data-bank="{{ bank.id }}"
+                >
+                    <img  class="paynow--bank-input paynow--list-img {% if bank.status == "DISABLED" %}disabled-method{% endif %}" src="{{ bank.image }}" alt="{{ bank.name }}"/>
+                </label>
+            </div>
+
+        {% endfor %}
+    </div>
+</div>

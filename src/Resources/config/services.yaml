@@ -1,0 +1,22 @@
+services:
+  _defaults:
+    autowire: true
+    autoconfigure: true
+
+  Crehler\PayNowPayment\:
+    resource: '../../../src/'
+  Paynow\Client:
+    factory: [ '@Crehler\PayNowPayment\Service\PayNowServicesFactory', 'factorClient' ]
+  Payow\Service\Payment:
+    factory: [ '@Crehler\PayNowPayment\Service\PayNowServicesFactory', 'factorPayment' ]
+
+
+monolog:
+  channels: [crehler_paynow_handler]
+  handlers:
+    crehler_paynow_handler:
+      type: rotating_file
+      path: "%kernel.logs_dir%/crehler/paynow%kernel.environment%.log"
+      channels: [crehler_paynow_handler]
+      max_files: 7
+      level: debug

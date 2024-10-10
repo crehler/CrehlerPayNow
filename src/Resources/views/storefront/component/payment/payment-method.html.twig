@@ -1,0 +1,28 @@
+{% sw_extends "@Storefront/storefront/component/payment/payment-method.html.twig" %}
+
+  {% block component_payment_method_description %}
+      {% set handler = 'Crehler\\PayNowPayment\\Service\\PayNowService' %}
+      {% if payment.handlerIdentifier is same as(handler) %}
+      <div class="payment-method-description">
+          <strong>paynow</strong>
+          {% if payment.translated.description %}
+              {% set paymentDescription = payment.translated.description|raw %}
+
+              {% if not payment.id is same as(selectedPaymentMethodId) %}
+                  {% set paymentDescription = (paymentDescription|length > 75 ? paymentDescription[:75] ~ ' ...' : paymentDescription) %}
+              {% endif %}
+
+              <p title="{{ payment.translated.description|raw }}">{{ paymentDescription }}</p>
+          {% endif %}
+
+          {% if payment.hasExtension('payNowBankList') %}
+              {% sw_include "@PayNowPayment/storefront/component/payment/pay-now-bank-list.html.twig" with {
+                  bankList: payment.getExtension('payNowBankList').paymentMethods,
+                  customer: context.customer
+              } %}
+          {% endif %}
+      </div>
+      {% else %}
+        {{ parent() }}
+      {% endif %}
+  {% endblock %}

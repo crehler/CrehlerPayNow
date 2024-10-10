@@ -1,0 +1,162 @@
+{% block  pay_now_order_payment_page %}
+<div v-if="!isLoading" class="">
+    <div v-if="showPayNowTab">
+        <sw-card rows="6"
+                 :title="$tc('pay-now-order.general.description')"
+                 :large="false"
+                 :isLoading="isLoading"
+                 class="sw-order-user-card"
+        >
+            <sw-container columns="1fr 1fr" class="pay-now-header">
+
+                <div>
+                    <img class="pay-now-logo" :src="'crehlerpaynowpayment/static/img/logo_paynow.png'|asset">
+                </div>
+                <div class="sw-order-user-card__info-summary" v-if="!isLoading">
+                    <div v-for="elements in listOfAmounts" class="pay-now-list-of-elements sw-order-user-card__metadata-price">
+                        {{ elements }} {{ currency }}
+                    </div>
+                </div>
+
+            </sw-container>
+            <sw-container class="pay-now-refund-button">
+                <div>
+                    <sw-button-group>
+                        <sw-button  variant="primary" size="small" @click="modalMode=true" class="">
+                            {{ $tc('pay-now-order.buttons.buttonPrepareRefund') }}
+                        </sw-button>
+                    </sw-button-group>
+                </div>
+
+            </sw-container>
+
+
+            <sw-container class="pay-now-overview">
+                <dl class="sw-description-list sw-order-user-card__summary-vertical">
+                    <dt>{{ $tc('pay-now-order.general.overviewLabelPaynowID') }}</dt>
+                    <dd>
+                        <div class="sw-order-inline-field">{{ order.transactions[0].customFields['paynowPaymentId'] }}
+                        </div>
+                    </dd>
+                </dl>
+                <dl class="sw-description-list sw-order-user-card__summary-vertical">
+                    <dt> {{ $tc('pay-now-order.general.overviewLabelPaynowStatus') }}</dt>
+                    <dd>
+                        <div class="sw-order-inline-field">paid</div>
+                    </dd>
+                </dl>
+            </sw-container>
+
+            <sw-container class="pay-now-overview">
+
+                <dl class="sw-description-list sw-order-user-card__summary-vertical">
+                    <dt> {{ $tc('pay-now-order.general.overviewLabelPaynowPaymentAddress') }}</dt>
+                    <dd>
+                        <div class="sw-order-inline-field">{{ billingAddress.firstName }} {{ billingAddress.lastName }}</div>
+                    </dd>
+                    <dd>
+                        <div class="sw-order-inline-field">{{ billingAddress.street }}</div>
+                    </dd>
+                    <dd>
+                        <div class="sw-order-inline-field">{{ billingAddress.city }} {{ billingAddress.zipcode }}</div>
+                    </dd>
+                </dl>
+
+                <dl class="sw-description-list sw-order-user-card__summary-vertical">
+                    <dt> {{ $tc('pay-now-order.general.overviewLabelPaynowDeliveryAddress') }}</dt>
+                    <dd>
+                        <div class="sw-order-inline-field">{{ shippingAddress.firstName }} {{ shippingAddress.lastName }}</div>
+                    </dd>
+                    <dd>
+                        <div class="sw-order-inline-field">{{ shippingAddress.street }}</div>
+                    </dd>
+                    <dd>
+                        <div class="sw-order-inline-field">{{ shippingAddress.city }} {{ shippingAddress.zipcode }}</div>
+                    </dd>
+                </dl>
+
+            </sw-container>
+
+            <sw-data-grid :isLoading="isLoading"
+                          :showActions="false"
+                          :showSelection="false"
+                          :dataSource="payNowHistory"
+                          :columns="columnsHistory"
+                          class="pay-now-data-grid"
+            >
+                <template #column-productsToPass="{ item, itemIndex }">
+
+                    <sw-data-grid :dataSource="item.productsToPass"
+                                  :showActions="false"
+                                  :columns="columnsHistoryProduct"
+                                  :showSelection="false">
+                    </sw-data-grid>
+                </template>
+            </sw-data-grid>
+
+            <div order="order">
+                <sw-modal v-if="modalMode" @modal-close="modalModeFalse" title="paynow zwroty"
+                          selector=".example .panel--content" class="pay-now-modal">
+
+                    <sw-data-grid :showActions="false" :showSelection="false" :dataSource="orderItems" :columns="columns">
+                        <template #column-input="{ item, itemIndex }">
+
+                            <sw-number-field @change="calculateRefund" v-model:value="item.toRefund" numberType="int" :step="null"
+                                             :min="0" :max="item.quantity" :allowEmpty="true">
+                                0
+                            </sw-number-field>
+
+                        </template>
+                    </sw-data-grid>
+                    <div  v-if="refundError">
+                        <sw-alert variant="warning"
+                                  :closable="true">
+                            <p>{{ $tc('pay-now-order.errors.refusedRefund') }}</p>
+                        </sw-alert>
+                    </div>
+                    <div  v-if="refundAmountTooBig">
+                        <sw-alert variant="warning"
+                                  :closable="true">
+                            <p>{{ $tc('pay-now-order.errors.toMuch') }}</p>
+                        </sw-alert>
+                    </div>
+                    <div  v-if="refundAmountTooSmall">
+                        <sw-alert variant="warning"
+                                  :closable="true">
+                            <p>{{ $tc('pay-now-order.errors.minimalAmount') }}</p>
+                        </sw-alert>
+                    </div>
+                    <div>
+                        {{ $tc('pay-now-order.modal.refundAmount') }}
+                    </div>
+                    <sw-number-field v-model:value="amountToRefund" numberType="float" min=0 :allowEmpty="false">
+
+                    </sw-number-field>
+
+                    <div>
+                        {{ $tc('pay-now-order.modal.refundDescription') }}
+                    </div>
+                    <div>
+                        <sw-single-select
+                                labelProperty="labelProperty"
+                                valueProperty="value"
+                                v-model:value="descriptionToRefund"
+                                :options="refundReasons"/>
+                    </div>
+                    <sw-button variant="primary"
+                               size="small"
+                               :isLoading="isLoading"
+                               @click="doRefund">
+                        {{ $tc('pay-now-order.buttons.buttonRefund') }}
+                    </sw-button>
+                </sw-modal>
+            </div>
+        </sw-card>
+    </div>
+    <div v-else>
+        <sw-card>
+            {{ $tc('pay-now-order.general.differentPaymentMethod') }}
+        </sw-card>
+    </div>
+</div>
+{% endblock %}
