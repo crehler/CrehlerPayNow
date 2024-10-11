@@ -1,0 +1,77 @@
+.paynow- {
+  .paynow---list {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-gap: 10px;
+
+    .paynow--list-item-container{
+      z-index: 4;
+    }
+
+    .paynow--list-item {
+      cursor: pointer;
+      transition: border-color .2s;
+      border: 3px transparent solid;
+      padding: 2px;
+      border-radius: 5px;
+      &:hover{
+        border-color: $sw-border-color;
+      }
+      &.disabled-method {
+        filter: grayscale(100%);
+        cursor: auto;
+        &:hover{
+          border: 3px transparent solid;
+        }
+      }
+    }
+
+    .is--active .paynow--list-item {
+      border-color: $sw-color-brand-primary;
+    }
+
+    input.paynow--bank-input {
+      display: none;
+    }
+  }
+}
+
+
+.check-payment--loader {
+  margin-top: 150px;
+  display: flex;
+  flex-direction: column;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-content: center;
+  align-items: center;
+  position: relative;
+
+}
+
+.check-payment--loader-icon{
+  max-width: 350px;
+
+  img{
+    width: 100%;
+  }
+}
+
+@include media-breakpoint-up(sm) {
+  .paynow- {
+    .paynow--list-img {
+      max-width: 100px;
+    }
+  }
+}
+
+@media screen and (min-width: 1400px) {
+  .paynow- {
+    .paynow---list {
+      grid-template-columns: 1fr 1fr 1fr;
+    }
+    .paynow--list-img {
+      max-width: 115px;
+    }
+  }
+}

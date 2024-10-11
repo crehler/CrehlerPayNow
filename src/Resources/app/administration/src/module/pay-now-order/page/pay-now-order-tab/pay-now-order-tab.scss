@@ -1,0 +1,94 @@
+.paynow-refund {
+  margin-top: 10px;
+  margin-bottom: 20px;
+  text-align: center;
+  border-collapse: collapse;
+  border: black 1px solid;
+
+  .column10 {
+    width: 10%;
+
+    input {
+      width: 50%;
+    }
+  }
+
+  .column30 {
+    width: 30%;
+  }
+
+  .refund-align-left {
+    text-align: left;
+  }
+
+  td {
+    padding: 5px 10px;
+  }
+
+  td, th {
+    border: black 1px solid;
+  }
+}
+
+.column100 {
+  padding: 5px;
+  width: 100%;
+  margin-bottom: 20px;
+}
+
+.pay-now-list-of-elements {
+  color: darkred;
+}
+
+.pay-now-list-of-elements:first-child {
+  color: green;
+}
+
+.pay-now-logo {
+  width: 100%;
+
+}
+
+.sw-container.pay-now-header {
+  margin-bottom: 40px;
+
+  .sw-order-user-card__info-summary{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-end;
+  }
+}
+
+.pay-now-overview {
+  display: grid;
+  grid-template-columns: 1fr;
+}
+
+.pay-now-data-grid {
+  margin: 40px -30px 0 -30px;
+  padding: 40px 30px 0 30px;
+  border-top: 1px solid #d1d9e0;
+}
+
+.sw-modal.pay-now-modal.sw-modal--default {
+  height: 100vh;
+
+  .sw-modal__dialog {
+    max-width: 820px;
+
+    .sw-data-grid {
+      margin-bottom: 40px;
+
+      .sw-data-grid__row {
+        border-bottom: 1px solid #d1d9e0;
+      }
+    }
+  }
+}
+
+@media only screen and (min-width: 720px) {
+  .pay-now-overview {
+    grid-template-columns: 1fr 1fr;
+  }
+}

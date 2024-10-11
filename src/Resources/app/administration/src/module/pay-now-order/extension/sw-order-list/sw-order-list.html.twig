@@ -1,0 +1,8 @@
+{% block sw_order_list_grid_columns_order_number %}
+    {% parent %}
+<template #column-orderRefund="{ item }" >
+    <span v-if="item.customFields && item.customFields.refoundAmount">
+        {{ item.customFields.refoundAmount}} {{ item.currency.symbol }}
+    </span>
+</template>
+{% endblock %}

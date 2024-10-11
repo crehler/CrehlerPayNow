@@ -1,0 +1,11 @@
+{
+  "paynow": {
+    "paymentConfirmation": {
+      "waitingText": "Waiting for payment confirmation...",
+      "waitingSuccessText": "Payment has been confirmed",
+      "waitingFailText": "Payment has expired",
+      "changePaymentMethodButton": "Change payment method",
+      "paymentCancelled": "Your payment has been cancelled"
+    }
+  }
+}
