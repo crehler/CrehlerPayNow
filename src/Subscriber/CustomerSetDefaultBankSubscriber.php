@@ -12,17 +12,10 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 class CustomerSetDefaultBankSubscriber implements EventSubscriberInterface
 {
-
-    /** @var EntityRepository */
-    private $customerRepository;
-
-    /** @var RequestStack */
-    private $requestStack;
-
-    public function __construct(EntityRepository $customerRepository, RequestStack $requestStack)
+    public function __construct(
+        private readonly EntityRepository $customerRepository,
+        private readonly RequestStack $requestStack)
     {
-        $this->customerRepository = $customerRepository;
-        $this->requestStack = $requestStack;
     }
 
     public static function getSubscribedEvents(): array

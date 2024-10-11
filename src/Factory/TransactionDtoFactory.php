@@ -7,6 +7,7 @@ use Crehler\PayNowPayment\DTO\Transaction\RequestObjects\TransactionBuyerDto;
 use Crehler\PayNowPayment\DTO\Transaction\RequestObjects\TransactionBuyerPhoneDto;
 use Crehler\PayNowPayment\DTO\Transaction\RequestObjects\TransactionOrderDto;
 use Crehler\PayNowPayment\DTO\Transaction\TransactionDto;
+use Shopware\Core\Checkout\Cart\LineItem\LineItem;
 use Shopware\Core\Checkout\Order\OrderEntity;
 use Brick\PhoneNumber\PhoneNumber;
 use Shopware\Core\Content\Product\ProductEntity;
@@ -16,13 +17,13 @@ use Symfony\Component\Routing\RouterInterface;
 
 class TransactionDtoFactory
 {
-    protected EntityRepository $tokenRepository;
+    protected EntityRepository $paynowPaymentTokensRepository;
 
     protected RouterInterface $router;
 
-    public function __construct(EntityRepository $tokenRepository, RouterInterface $router)
+    public function __construct(EntityRepository $paynowPaymentTokensRepository, RouterInterface $router)
     {
-        $this->tokenRepository = $tokenRepository;
+        $this->paynowPaymentTokensRepository = $paynowPaymentTokensRepository;
         $this->router = $router;
     }
 
@@ -36,33 +37,58 @@ class TransactionDtoFactory
         $buyer->setFirstName($orderCustomer->getFirstName());
         $buyer->setLastName($orderCustomer->getLastName());
 
-        $orderProducts = $order->getLineItems()->getElements();
+        $orderProducts = $order->getLineItems()?->getElements();
+
         $lineItemsArray = [];
+        $sumOrder = 0;
 
         /** @var ProductEntity $product */
-        foreach ($orderProducts as $product){
+        foreach ($orderProducts as $product) {
+
+            // remove promotion from the line items
+            if ($product->getType() === LineItem::PROMOTION_LINE_ITEM_TYPE) {
+                continue;
+            }
+
+            $productUnitPrice = $product->getCustomFields()['crehler_line_item_price']['unitPrice'];
+            $productQuantity = $product->getCustomFields()['crehler_line_item_price']['quantity'];
+            $sumOrder += $productUnitPrice;
+
             $orderItem = new TransactionOrderDto();
             $orderItem->setName($product->getLabel());
             $orderItem->setCategory($product->getType());
-            $orderItem->setPrice(OrderAmountFormat::floatToInt($product->getPrice()->getUnitPrice()));
-            $orderItem->setQuantity($product->getQuantity());
+            $orderItem->setPrice(OrderAmountFormat::floatToInt($productUnitPrice));
+            $orderItem->setQuantity($productQuantity);
+
             $lineItemsArray[] = $orderItem;
-        };
+        }
+
+       if ($sumOrder > $order->getAmountTotal()) {
+            $lastLineItem = end($lineItemsArray);
+
+            $lastLineItem->setPrice($lastLineItem->getPrice() - 1);
+       }
+
+        if ($sumOrder < $order->getAmountTotal()) {
+            $lastLineItem = end($lineItemsArray);
+
+            $lastLineItem->setPrice($lastLineItem->getPrice() + 1);
+        }
 
         $transactionDto = new TransactionDto();
 
-        if($customerNumber){
+        if ($customerNumber) {
             $phone = $this->createPhoneNo($customerNumber, $order->getBillingAddress()->getCountry()->getIso());
             $buyer->setPhone($phone);
         }
-        if($customerBankId){
+        if ($customerBankId) {
             $transactionDto->setPaymentMethodId($customerBankId);
         }
 
         $url_components = (parse_url($returnUrl));
         parse_str($url_components['query'], $params);
 
-        $returnUrl =$this->router->generate('frontend.paynow.check', ['transactionId' => $transactionId], UrlGeneratorInterface::ABSOLUTE_URL);
+        $returnUrl = $this->router->generate('frontend.paynow.check', ['transactionId' => $transactionId], UrlGeneratorInterface::ABSOLUTE_URL);
 
         $transactionDto->setOrderItems($lineItemsArray);
         $transactionDto->setAmount(OrderAmountFormat::floatToInt($order->getAmountTotal()));
@@ -89,5 +115,12 @@ class TransactionDtoFactory
             $phone->setNumber($numberCustomer);
         }
         return $phone;
+    }
+
+    private function fixTotalAmount(OrderEntity $orderEntity, TransactionOrderDto $transactionOrderDto, int $sumPrice): void
+    {
+        if ($transactionOrderDto->getPrice()) {
+
+        }
     }
 }

@@ -2,22 +2,19 @@
 
 namespace Crehler\PayNowPayment\Controller;
 
-use Crehler\PayNowPayment\Controller\StatusCheck\AbstractStatusCheckRoute;
+use Crehler\PayNowPayment\Controller\StatusCheck\StatusCheckRoute;
 use Shopware\Core\System\SalesChannel\SalesChannelContext;
 use Shopware\Storefront\Controller\StorefrontController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Routing\Attribute\Route;
 
 
 #[Route(defaults: ['_routeScope' => ['storefront']])]
 class StatusCheckController extends StorefrontController
 {
-    private AbstractStatusCheckRoute $route;
-
-    public function __construct(AbstractStatusCheckRoute $route)
+    public function __construct(private StatusCheckRoute $route)
     {
-        $this->route = $route;
     }
 
     #[Route(path: '/paynow/payment-check', name: 'frontend.paynow-payment-check', defaults: ['XmlHttpRequest' => true], methods: ['POST'])]

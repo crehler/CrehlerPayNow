@@ -10,28 +10,25 @@ use Psr\Log\LoggerInterface;
 use Shopware\Core\Framework\Plugin\Exception\DecorationPatternException;
 use Shopware\Core\System\SalesChannel\SalesChannelContext;
 use Shopware\Core\System\SystemConfig\SystemConfigService;
-use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\DependencyInjection\Attribute\Autoconfigure;
+use Symfony\Component\HttpFoundation\RequestStack;
+use Symfony\Component\Routing\Attribute\Route;
 use Paynow\Exception\PaynowException;
 use Paynow\Service\Payment;
 use OpenApi\Annotations as OA;
 
 
 #[Route(defaults: ['_routeScope' => ['store-api']])]
+#[Autoconfigure(public: true)]
 class RetrieverController extends AbstractRetrieveController
 {
-    private SystemConfigService $systemConfigService;
-    private Client $client;
-    private LoggerInterface $logger;
-
     public function __construct(
-        SystemConfigService $systemConfigService,
-        LoggerInterface     $logger,
-        Client              $client
+        private readonly SystemConfigService $systemConfigService,
+        private readonly LoggerInterface     $logger,
+        private readonly Client              $client,
+        private readonly RequestStack        $requestStack
     )
     {
-        $this->systemConfigService = $systemConfigService;
-        $this->logger = $logger;
-        $this->client = $client;
     }
 
     public function getDecorated(): AbstractRetrieveController
@@ -53,30 +50,38 @@ class RetrieverController extends AbstractRetrieveController
      * @param SalesChannelContext $context
      * @return PaymentResponse
      */
-    #[Route(path: '/store-api/paynowpayment/payment-methods', name: 'store-api.paynowpayment.paymentmethods', defaults: ['auth_required' => false], methods: ['GET'])]
+    #[Route(
+        path: '/store-api/paynowpayment/payment-methods',
+        name: 'store-api.paynowpayment.paymentmethods',
+        methods: ['GET']
+    )]
     public function load(SalesChannelContext $context): PaymentResponse
     {
+        $paymentMethodsCollection = new PaymentMethodsCollection();
+
         try {
             $payment = new Payment($this->client);
+
             $paymentMethods = $payment->getPaymentMethods($context->getCurrency()->getIsoCode(), 0);
-            $availablePaymentMethods = $paymentMethods->getAll();
+
+            $availablePaymentMethods = $paymentMethods->getAll() ?? [];
+
+            /** @var PaymentMethod $method */
+            foreach ($availablePaymentMethods as $method) {
+                $struct = new PaymentMethodStruct($method->getId(), $method->getType(), $method->getName(), $method->getDescription(), $method->getImage(), $method->getStatus());
+                $paymentMethodsCollection->add($struct);
+            }
         } catch (PaynowException $exception) {
             $this->logger->info($exception->getMessage());
         }
 
-        $paymentMethodsCollection = new PaymentMethodsCollection();
-
-        /** @var PaymentMethod $method */
-        foreach ($availablePaymentMethods as $method) {
-
-            $struct = new PaymentMethodStruct($method->getId(), $method->getType(), $method->getName(), $method->getDescription(), $method->getImage(), $method->getStatus());
-            $paymentMethodsCollection->add($struct);
-        }
         return new PaymentResponse($paymentMethodsCollection);
     }
 
     public function loadActive(?SalesChannelContext $context): PaymentResponse
     {
+        $paymentMethodsCollection = new PaymentMethodsCollection();
+
         $availablePaymentMethods = [];
         try {
             $payment = new Payment($this->client);
@@ -85,16 +90,12 @@ class RetrieverController extends AbstractRetrieveController
             } else {
                 $paymentMethods = $payment->getPaymentMethods('PLN', 0);
             }
-            $availablePaymentMethods = $paymentMethods->getAll();
+            $availablePaymentMethods = $paymentMethods->getAll() ?? [];
         } catch (PaynowException $exception) {
             $this->logger->info($exception->getMessage());
         }
 
-        $paymentMethodsCollection = new PaymentMethodsCollection();
-
-
         $showCards = $this->systemConfigService->get('CrehlerPayNowPayment.config.EnableCarts');
-
         /** @var PaymentMethod $method */
         foreach ($availablePaymentMethods as $method) {
             if ($method->getStatus() !== 'ENABLED') {

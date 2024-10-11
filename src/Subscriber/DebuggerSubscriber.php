@@ -14,9 +14,8 @@ use Crehler\PayNowPayment\Event\PaymentAuthorizeRequestEvent;
 use Crehler\PayNowPayment\Event\PaymentAuthorizeResponseEvent;
 use Psr\Log\LoggerInterface;
 use Shopware\Core\System\SystemConfig\SystemConfigService;
-use Shopware\Storefront\Pagelet\Footer\FooterPageletLoadedEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
-use PayNow\Client;
+use Paynow\Client;
 
 class DebuggerSubscriber implements EventSubscriberInterface
 {

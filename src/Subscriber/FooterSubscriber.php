@@ -18,19 +18,14 @@ class FooterSubscriber implements EventSubscriberInterface
     const CACHE_KEY_PAYMENT_METHODS = 'PaymentMethods';
     const CACHE_NAMESPACE = 'CrehlerPaynowIntegration';
 
-    protected RetrieverController  $paymentMethods;
     protected FilesystemAdapter $cache;
-    protected SystemConfigService $systemConfigService;
 
     public function __construct(
-        SystemConfigService $systemConfigService,
-        RetrieverController  $paymentMethods
+        private readonly SystemConfigService $systemConfigService,
+        private readonly RetrieverController  $paymentMethods
     )
     {
         $this->cache = new FilesystemAdapter(self::CACHE_NAMESPACE);
-        $this->paymentMethods = $paymentMethods;
-        $this->systemConfigService = $systemConfigService;
-
     }
     public static function getSubscribedEvents(): array
     {
@@ -50,8 +45,7 @@ class FooterSubscriber implements EventSubscriberInterface
         };
 
         /** @var PaymentResponse $footerBankIcons */
-        $footerBankIcons = $this->paymentMethods->loadActive($event->getSalesChannelContext())->getPaymentMethods();
-
+        $footerBankIcons = $this->paymentMethods->loadActive($event->getSalesChannelContext())->getResult();
         $paymentMethodsCache->set($footerBankIcons);
         $paymentMethodsCache->expiresAfter(self::CACHE_LIFETIME);
 

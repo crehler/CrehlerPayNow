@@ -9,6 +9,8 @@ use Monolog\Logger;
 use Paynow\Service\Payment;
 use Crehler\PayNowPayment\Common\Serializer;
 use Crehler\PayNowPayment\Factory\TransactionDtoFactory;
+use Psr\Log\LoggerInterface;
+use Shopware\Core\Checkout\Cart\SalesChannel\CartService;
 use Shopware\Core\Checkout\Payment\Cart\AsyncPaymentTransactionStruct;
 use Shopware\Core\Checkout\Payment\Cart\PaymentHandler\AsynchronousPaymentHandlerInterface;
 use Shopware\Core\Checkout\Payment\Exception\AsyncPaymentProcessException;
@@ -16,37 +18,30 @@ use Shopware\Core\Checkout\Payment\Exception\CustomerCanceledAsyncPaymentExcepti
 use Shopware\Core\Framework\DataAbstractionLayer\EntityRepository;
 use Shopware\Core\Framework\Validation\DataBag\RequestDataBag;
 use Shopware\Core\System\SalesChannel\SalesChannelContext;
+use Symfony\Component\DependencyInjection\Attribute\Autoconfigure;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 
+#[Autoconfigure(tags: [['name' => 'shopware.payment.method.async']])]
 class PayNowService implements AsynchronousPaymentHandlerInterface
 
 {
     const PAYNOW_PAYMENT_ID = 'paynowPaymentId';
-    private Logger $logger;
-    private Payment $payment;
-    private TransactionDtoFactory $transactionDtoFactory;
-    private EntityRepository $transactionRepository;
-    private EventDispatcherInterface $eventDispatcher;
-    private IdempotencyKeyGenerator $idempotencyKeyGenerator;
+
+    private $payment;
 
     public function __construct(
-        Logger                   $logger,
-        Payment                  $payment,
-        TransactionDtoFactory    $transactionDtoFactory,
-        EntityRepository         $transactionRepository,
-        EventDispatcherInterface $eventDispatcher,
-        IdempotencyKeyGenerator  $idempotencyKeyGenerator
+        private readonly LoggerInterface          $logger,
+        private readonly PayNowServicesFactory    $factory,
+        private readonly TransactionDtoFactory    $transactionDtoFactory,
+        private readonly EntityRepository         $orderTransactionRepository,
+        private readonly EventDispatcherInterface $eventDispatcher,
+        private readonly IdempotencyKeyGenerator  $idempotencyKeyGenerator,
     )
     {
-        $this->transactionDtoFactory = $transactionDtoFactory;
-        $this->logger = $logger;
-        $this->payment = $payment;
-        $this->transactionRepository = $transactionRepository;
-        $this->eventDispatcher = $eventDispatcher;
-        $this->idempotencyKeyGenerator = $idempotencyKeyGenerator;
+        $this->payment = $factory->factorPayment();
     }
 
     /**
@@ -62,6 +57,7 @@ class PayNowService implements AsynchronousPaymentHandlerInterface
 
         $transactionDto = $this->transactionDtoFactory->createTransactionDto($transaction->getOrder(), $transaction->getReturnUrl(), $customerBankId, $transaction->getOrderTransaction()->getId());
         $normalizedTransaction = Serializer::getSerializer()->normalize($transactionDto, 'json');
+
         try {
             $this->eventDispatcher->dispatch(new PaymentAuthorizeRequestEvent($transaction, $salesChannelContext, $this->payment->getClient(), $normalizedTransaction, $transaction->getOrderTransaction()->getId()));
             $result = $this->payment->authorize($normalizedTransaction, $idempotencyKey);
@@ -77,7 +73,7 @@ class PayNowService implements AsynchronousPaymentHandlerInterface
 
         $data = $result->getPaymentId();
 
-        $this->transactionRepository->upsert([[
+        $this->orderTransactionRepository->upsert([[
             'id' => $transaction->getOrderTransaction()->getId(),
             'customFields' => [
                 self::PAYNOW_PAYMENT_ID => $data

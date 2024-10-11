@@ -18,35 +18,21 @@ use Shopware\Core\System\SystemConfig\SystemConfigService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Routing\Attribute\Route;
 
 
 #[Route(defaults: ['_routeScope' => ['storefront']])]
 class OrderNotificationController extends AbstractController
 {
-
-    private EntityRepository $orderRepository;
-    private LoggerInterface $logger;
-    private SystemConfigService $systemConfigService;
-    private EntityRepository $orderTransactionRepository;
-    private OrderTransactionStateHandler $orderTransactionStateHandler;
-    private PayNowServicesFactory $payNowServicesFactory;
-
     public function __construct(
-        EntityRepository             $orderRepository,
-        EntityRepository             $orderTransactionRepository,
-        LoggerInterface              $logger,
-        SystemConfigService          $systemConfigService,
-        OrderTransactionStateHandler $orderTransactionStateHandler,
-        PayNowServicesFactory        $payNowServicesFactory
+        private readonly EntityRepository             $orderRepository,
+        private readonly EntityRepository             $orderTransactionRepository,
+        private readonly LoggerInterface              $logger,
+        private readonly SystemConfigService          $systemConfigService,
+        private readonly OrderTransactionStateHandler $orderTransactionStateHandler,
+        private readonly PayNowServicesFactory        $payNowServicesFactory
     )
     {
-        $this->orderRepository = $orderRepository;
-        $this->orderTransactionRepository = $orderTransactionRepository;
-        $this->logger = $logger;
-        $this->systemConfigService = $systemConfigService;
-        $this->orderTransactionStateHandler = $orderTransactionStateHandler;
-        $this->payNowServicesFactory = $payNowServicesFactory;
     }
 
     /**

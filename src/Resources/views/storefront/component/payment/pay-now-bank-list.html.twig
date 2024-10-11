@@ -2,6 +2,7 @@
     {% set payNowBankSelectionOptions = {
         paymentId: payment.id
     } %}
+
     <div class="paynow---list"
          data-pay-now-payment-methods="true"
          data-pay-now-payment-methods-options='{{ payNowBankSelectionOptions|json_encode }}' >

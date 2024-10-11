@@ -21,6 +21,7 @@ class Uninstall
                 try {
                     $this->connection->executeStatement("DROP TABLE IF EXISTS  `paynow_refund_history`");
                     $this->connection->executeStatement("DROP TABLE IF EXISTS  `paynow_payment_tokens`");
+                    $this->connection->executeStatement("DROP TABLE IF EXISTS  `paynow_idempotency_key`");
                 } catch (\Exception $e) {}
             }
         }

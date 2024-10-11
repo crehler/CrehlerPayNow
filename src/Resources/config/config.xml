@@ -53,6 +53,7 @@
             <label>Anonymize the saved data</label>
             <label lang="de-DE">Anonymisieren Sie die gespeicherten Daten</label>
             <label lang="pl-PL">Anonimizuj zapisywane dane</label>
+            <defaultValue>true</defaultValue>
         </input-field>
     </card>
 </config>

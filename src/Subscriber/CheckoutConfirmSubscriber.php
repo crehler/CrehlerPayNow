@@ -19,7 +19,7 @@ class CheckoutConfirmSubscriber implements EventSubscriberInterface
     protected SystemConfigService $systemConfigService;
 
     public function __construct(
-        AbstractRetrieveController $paymentMethods,
+        RetrieverController $paymentMethods,
         SystemConfigService        $systemConfigService
     )
     {
@@ -42,6 +42,7 @@ class CheckoutConfirmSubscriber implements EventSubscriberInterface
         $payments = $event->getPage()->getPaymentMethods();
         if ($this->systemConfigService->get('CrehlerPayNowPayment.config.EnableLevelZero')) {
             $newPaymentMethods = $this->paymentMethods->load($event->getSalesChannelContext());
+
             foreach ($payments as $payment) {
                 if ($payment->getHandlerIdentifier() === $payNowHandler) {
                     $payment->addExtension('payNowBankList', $newPaymentMethods->getResult());
@@ -56,6 +57,7 @@ class CheckoutConfirmSubscriber implements EventSubscriberInterface
         $payments = $event->getPage()->getPaymentMethods();
         if ($this->systemConfigService->get('CrehlerPayNowPayment.config.EnableLevelZero')) {
             $newPaymentMethods = $this->paymentMethods->load($event->getSalesChannelContext());
+
             foreach ($payments as $payment) {
                 if ($payment->getHandlerIdentifier() === $payNowHandler) {
                     $payment->addExtension('payNowBankList', $newPaymentMethods->getResult());
