@@ -4,7 +4,7 @@
       {% set handler = 'Crehler\\PayNowPayment\\Service\\PayNowService' %}
       {% if payment.handlerIdentifier is same as(handler) %}
       <div class="payment-method-description">
-          <strong>{{ payment.translated.name }}</strong>
+          <strong>paynow</strong>
           {% if payment.translated.description %}
               {% set paymentDescription = payment.translated.description|raw %}
 

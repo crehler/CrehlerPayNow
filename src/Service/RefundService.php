@@ -13,19 +13,12 @@ use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\EqualsFilter;
 
 class RefundService
 {
-    public EntityRepository $orderRepository;
-    public EntityRepository $orderTransactionRepository;
-    private EntityRepository $payNowRefundHistoryRepository;
-
     public function __construct(
-        EntityRepository $orderRepository,
-        EntityRepository $orderTransactionRepository,
-        EntityRepository $payNowRefundHistoryRepository
+        private readonly EntityRepository $orderRepository,
+        private readonly EntityRepository $orderTransactionRepository,
+        private readonly EntityRepository $paynowRefundHistoryRepository
     )
     {
-        $this->orderRepository = $orderRepository;
-        $this->orderTransactionRepository = $orderTransactionRepository;
-        $this->payNowRefundHistoryRepository = $payNowRefundHistoryRepository;
     }
 
     public function createArrayOfProductsToRefund(array $productsToRefund):array
@@ -69,7 +62,7 @@ class RefundService
         $payNowHistoryCriteria->addFilter(new EqualsFilter('refundId', $refundId));
 
         /** @var PaymentRefundHistoryEntity $payNowHistoryRecord */
-        $payNowHistoryRecord = $this->payNowRefundHistoryRepository->search($payNowHistoryCriteria, Context::createDefaultContext())->first();
+        $payNowHistoryRecord = $this->paynowRefundHistoryRepository->search($payNowHistoryCriteria, Context::createDefaultContext())->first();
 
         $orderTransactionCriteria = new Criteria();
         $orderTransactionCriteria->addFilter(new EqualsFilter('id', $payNowHistoryRecord->getTransactionId()));

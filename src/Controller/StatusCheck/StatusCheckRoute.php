@@ -11,17 +11,15 @@ use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
 use Shopware\Core\Framework\Plugin\Exception\DecorationPatternException;
 use Shopware\Core\System\SalesChannel\SalesChannelContext;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Routing\Attribute\Route;
 
 
 #[Route(defaults: ['_routeScope' => ['store-api']])]
 class StatusCheckRoute extends AbstractStatusCheckRoute
 {
-    private EntityRepository $orderTransactionRepository;
-
-    public function __construct(EntityRepository $orderTransactionRepository)
+    public function __construct(
+        private readonly EntityRepository $orderTransactionRepository)
     {
-        $this->orderTransactionRepository = $orderTransactionRepository;
     }
 
     #[Route(path: '/store-api/paynow/payment-check', name: 'store-api.paynow-payment-check', methods: ['POST'])]
@@ -70,6 +68,7 @@ class StatusCheckRoute extends AbstractStatusCheckRoute
     private function isOrderPaid(string $transactionId, Context $context): ?bool
     {
         $criteria = new Criteria([$transactionId]);
+        $criteria->addAssociation('stateMachineState');
 
         /** @var OrderTransactionEntity $transaction */
         $transaction = $this->orderTransactionRepository->search($criteria, $context)->first();

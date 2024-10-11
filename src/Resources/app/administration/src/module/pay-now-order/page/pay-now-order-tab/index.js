@@ -107,7 +107,6 @@ Component.register('pay-now-order-tab', {
 
     watch: {
         '$route'() {
-            this.resetDataAttributes();
             this.createdComponent();
         },
     },
@@ -282,13 +281,14 @@ Component.register('pay-now-order-tab', {
             } else if(this.amountToRefund < 1){
                 this.refundAmountTooSmall =true;
 
-            } else{
+            } else {
                 this.PayNowOrderService.refundPayment(this.order.id, this.amountToRefund.toFixed(2), this.descriptionToRefund, this.productsToRefund)
                     .then(()=>{
                         this.createNotificationSuccess({
                             title: 'Succes',
                             message: this.$tc('pay-now-order.notification.success'),
                         });
+                        this.refreshDataSource();
                         that.modalModeFalse();
                 })
                     .catch(()=>{
@@ -297,7 +297,7 @@ Component.register('pay-now-order-tab', {
                             message:  this.$tc('pay-now-order.notification.failure'),
                         });
                     })
-        }
+            }
         },
 
         fetchStatus() {

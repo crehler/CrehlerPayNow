@@ -1,7 +1,7 @@
 {% sw_extends '@Storefront/storefront/layout/footer/footer.html.twig' %}
 
  {% block layout_footer_payment_logos %}
-     {% for paymentMethod in page.footer.extensions.paymentMethods %}
+     {% for paymentMethod in page.footer.extensions.paymentMethods['paymentMethods'] %}
                  <div class="footer-logo is-payment">
                      <img class="paynow--footer-list-img" style="height: 50px" src="{{ paymentMethod.image }}" alt="{{ paymentMethod.name }}"/>
                  </div>

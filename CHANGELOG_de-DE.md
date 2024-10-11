@@ -9,3 +9,6 @@
 
 # 2.0.2
 - Security update
+
+# 2.0.3
+- Fix payments for products with promotions

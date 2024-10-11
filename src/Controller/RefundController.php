@@ -3,9 +3,9 @@
 namespace Crehler\PayNowPayment\Controller;
 
 
-use Paynow\Client;
-use Crehler\PayNowPayment\Controller\PaymentMethods\AbstractRetrieveController;
 use Crehler\PayNowPayment\Controller\PaymentMethods\PaymentResponse;
+use Crehler\PayNowPayment\Controller\PaymentMethods\RetrieverController;
+use Paynow\Client;
 use Crehler\PayNowPayment\Service\RefundService;
 use Psr\Log\LoggerInterface;
 use Paynow\Exception\PaynowException;
@@ -17,7 +17,7 @@ use Shopware\Core\Framework\DataAbstractionLayer\EntityRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Routing\Attribute\Route;
 use Shopware\Core\Framework\Uuid\Uuid;
 use Crehler\PayNowPayment\Common\OrderAmountFormat;
 
@@ -25,34 +25,17 @@ use Crehler\PayNowPayment\Common\OrderAmountFormat;
 #[Route(defaults: ['_routeScope' => ['api']])]
 class RefundController extends AbstractController
 {
-    private LoggerInterface $logger;
-    private EntityRepository $orderTransactionRepository;
-    private EntityRepository $orderRepository;
-    private OrderTransactionStateHandler $orderTransactionStateHandler;
-    private EntityRepository $payNowRefundHistoryRepository;
-    private AbstractRetrieveController $paymentMethods;
-    private Client $client;
-    private RefundService $refundService;
-
     public function __construct(
-        EntityRepository             $orderTransactionRepository,
-        LoggerInterface              $logger,
-        EntityRepository             $orderRepository,
-        OrderTransactionStateHandler $orderTransactionStateHandler,
-        EntityRepository             $payNowRefundHistoryRepository,
-        AbstractRetrieveController   $paymentMethods,
-        Client                       $client,
-        RefundService                $refundService
+        private readonly EntityRepository             $orderTransactionRepository,
+        private readonly LoggerInterface              $logger,
+        private readonly EntityRepository             $orderRepository,
+        private readonly OrderTransactionStateHandler $orderTransactionStateHandler,
+        private readonly EntityRepository             $paynowRefundHistoryRepository,
+        private readonly RetrieverController          $retrieveController,
+        private readonly Client                       $client,
+        private readonly RefundService                $refundService
     )
     {
-        $this->orderTransactionRepository = $orderTransactionRepository;
-        $this->logger = $logger;
-        $this->orderRepository = $orderRepository;
-        $this->orderTransactionStateHandler = $orderTransactionStateHandler;
-        $this->payNowRefundHistoryRepository = $payNowRefundHistoryRepository;
-        $this->paymentMethods = $paymentMethods;
-        $this->client = $client;
-        $this->refundService = $refundService;
     }
 
     #[Route(path: '/api/paynowpayment/fetch-refund-payment', name: 'paynowpayment.api.fetch-refund', defaults: ['auth_required' => true], methods: ['POST'])]
@@ -90,7 +73,7 @@ class RefundController extends AbstractController
                     $this->orderTransactionStateHandler->refund($paynowData["transactionId"], Context::createDefaultContext());
                 }
 
-                $this->payNowRefundHistoryRepository->upsert([[
+                $this->paynowRefundHistoryRepository->upsert([[
                     'id' => $paynowData["refundId"],
                     'paynowStatus' => 'zwrot zaakceptowany'
                 ]], Context::createDefaultContext());
@@ -138,7 +121,7 @@ class RefundController extends AbstractController
                 ],
             ], Context::createDefaultContext());
 
-            $this->payNowRefundHistoryRepository->create([
+            $this->paynowRefundHistoryRepository->create([
                 [
                     'id' => Uuid::randomHex(),
                     'transactionId' => $orderTransactionid,
@@ -161,7 +144,8 @@ class RefundController extends AbstractController
     {
         try {
             /** @var PaymentResponse $footerBankIcons */
-            $footerBankIcons = $this->paymentMethods->loadActive(null);
+            $footerBankIcons = $this->retrieveController->loadActive(null);
+
             if ($footerBankIcons->getPaymentMethods()->getElements()) {
                 return new JSONResponse(["success" => true], 200);
             }

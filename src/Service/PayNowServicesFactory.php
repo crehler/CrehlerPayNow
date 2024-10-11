@@ -19,17 +19,11 @@ use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 
 class PayNowServicesFactory
 {
-    private SystemConfigService $systemConfigService;
-
-    private ParameterBagInterface $parameterBag;
-
-    private ?Client $client;
-
-    public function __construct(SystemConfigService $systemConfigService, ParameterBagInterface $parameterBag)
+    protected ?Client $client = null;
+    public function __construct(
+        private readonly SystemConfigService $systemConfigService,
+        private readonly ParameterBagInterface $parameterBag)
     {
-        $this->systemConfigService = $systemConfigService;
-        $this->parameterBag = $parameterBag;
-        $this->client = null;
     }
 
     public function getClient(): Client

@@ -22,7 +22,7 @@
             <sw-container class="pay-now-refund-button">
                 <div>
                     <sw-button-group>
-                        <sw-button  variant="primary"size="small" @click="modalMode=true" class="">
+                        <sw-button  variant="primary" size="small" @click="modalMode=true" class="">
                             {{ $tc('pay-now-order.buttons.buttonPrepareRefund') }}
                         </sw-button>
                     </sw-button-group>
@@ -101,7 +101,7 @@
                     <sw-data-grid :showActions="false" :showSelection="false" :dataSource="orderItems" :columns="columns">
                         <template #column-input="{ item, itemIndex }">
 
-                            <sw-number-field @change="calculateRefund" v-model="item.toRefund" numberType="int" :step="null"
+                            <sw-number-field @change="calculateRefund" v-model:value="item.toRefund" numberType="int" :step="null"
                                              :min="0" :max="item.quantity" :allowEmpty="true">
                                 0
                             </sw-number-field>
@@ -129,7 +129,7 @@
                     <div>
                         {{ $tc('pay-now-order.modal.refundAmount') }}
                     </div>
-                    <sw-number-field v-model="amountToRefund" numberType="float" min=0 :allowEmpty="false">
+                    <sw-number-field v-model:value="amountToRefund" numberType="float" min=0 :allowEmpty="false">
 
                     </sw-number-field>
 
@@ -140,7 +140,7 @@
                         <sw-single-select
                                 labelProperty="labelProperty"
                                 valueProperty="value"
-                                v-model="descriptionToRefund"
+                                v-model:value="descriptionToRefund"
                                 :options="refundReasons"/>
                     </div>
                     <sw-button variant="primary"

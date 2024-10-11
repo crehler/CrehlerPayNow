@@ -1,0 +1,3 @@
+paynow-storefront:
+  resource: '../../Controller/**/*Controller.php'
+  type: attribute

@@ -47,6 +47,11 @@ class CrehlerPayNowPayment extends Plugin
         $this->addPaymentMethod($context->getContext());
     }
 
+    public function executeComposerCommands(): bool
+    {
+        return true;
+    }
+
     public function uninstall(UninstallContext $context): void
     {
         (new Uninstall(
@@ -71,7 +76,9 @@ class CrehlerPayNowPayment extends Plugin
 
     private function addPaymentMethod(Context $context): void
     {
-
+        if($this->getPaymentMethodId()){
+            return;
+        }
         /** @var PluginIdProvider $pluginIdProvider */
         $pluginIdProvider = $this->container->get(PluginIdProvider::class);
         $pluginId = $pluginIdProvider->getPluginIdByBaseClass(get_class($this), $context);

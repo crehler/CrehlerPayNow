@@ -18,11 +18,10 @@ use Shopware\Core\System\SalesChannel\SalesChannelContext;
 
 class IdempotencyKeyGenerator
 {
-    private EntityRepository $paynowIdempotencyKeyRepository;
-
-    public function __construct(EntityRepository $paynowIdempotencyKeyRepository)
+    public function __construct(
+        private readonly EntityRepository $paynowIdempotencyKeyRepository
+    )
     {
-        $this->paynowIdempotencyKeyRepository = $paynowIdempotencyKeyRepository;
     }
 
     public function generate(OrderTransactionEntity $orderTransactionEntity, ?Context $context = null)
