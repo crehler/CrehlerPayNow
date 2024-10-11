@@ -1,0 +1,30 @@
+{% sw_extends '@Storefront/storefront/page/account/_page.html.twig' %}
+
+{% block base_content %}
+    {% set paynowCheckOptions = {
+        orderId: page.orderId,
+        transactionId: page.transactionId,
+        successUrl: seoUrl('frontend.checkout.finish.page', {'orderId': page.orderId}),
+        failUrl: path('frontend.account.edit-order.page', { 'orderId': page.orderId }),
+        checkUrl: path('frontend.paynow-payment-check'),
+        waitingTime: config('PayNowPayment.config.WaitingTime'),
+        waitingSuccessText: "paynow.paymentConfirmation.waitingSuccessText"|trans|sw_sanitize,
+        waitingFailText: "paynow.paymentConfirmation.waitingFailText"|trans|sw_sanitize,
+    } %}
+    <div data-paynow-payment-check="true"
+         data-paynow-payment-check-options='{{ paynowCheckOptions|json_encode }}'
+    >
+        <div class="check-payment--loader">
+            <div class="check-payment--loader-icon">
+                <img src="{{ asset('static/img/logo_paynow.png', '@CrehlerPayNowPayment') }}" alt="PayNow logo"/>
+            </div>
+            <div data-info-text="true" class="font-weight-bold">{{ "paynow.paymentConfirmation.waitingText"|trans|sw_sanitize }}</div>
+            <div class="mt-5">
+                <a class="btn btn-secondary change-payment-method-btn"
+                   href="{{ path('frontend.account.edit-order.page', { 'orderId': page.orderId }) }}">
+                    {{ "paynow.paymentConfirmation.changePaymentMethodButton"|trans|sw_sanitize }}
+                </a>
+            </div>
+        </div>
+    </div>
+{% endblock %}

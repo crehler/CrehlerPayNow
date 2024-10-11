@@ -1,0 +1,26 @@
+{% block sw_order_detail_content_tabs_general %}
+    {% parent %}
+
+    {% block pay_now_order_payment_tab %}
+<template v-if="!isLoadingPayNowTransactions">
+    <sw-tabs-item v-for="payNowTransaction in payNowTransactions"
+                  v-bind:key="payNowTransaction.id"
+                  :route="getPayNowDetailsRoute(payNowTransaction.id)"
+                  :title="$tc('pay-now-order.general.description')">
+        {{ $tc('pay-now-order.general.title') }}
+    </sw-tabs-item>
+</template>
+{% endblock %}
+{% endblock %}
+
+{% block sw_order_detail_content_view %}
+<sw-container v-if="hasIncompleteTransaction" columns="1fr" class="pay-now-order-notification-container">
+    <sw-alert variant="warning" appearance="default" :showIcon="true" :closable="false">
+        {{ $tc('pay-now-order.notification.invalidTransaction') }}
+    </sw-alert>
+</sw-container>
+
+{% parent %}
+{% endblock %}
+
+

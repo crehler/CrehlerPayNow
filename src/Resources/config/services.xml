@@ -1,0 +1,153 @@
+<?xml version="1.0" ?>
+
+<container xmlns="http://symfony.com/schema/dic/services"
+           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xmlns:monolog="http://symfony.com/schema/dic/monolog"
+           xsi:schemaLocation="http://symfony.com/schema/dic/services http://symfony.com/schema/dic/services/services-1.0.xsd http://symfony.com/schema/dic/monolog http://symfony.com/schema/dic/monolog/monolog-1.0.xsd">
+
+    <monolog:config>
+        <monolog:channel>crehler_paynow</monolog:channel>
+        <monolog:handler
+                path="%kernel.logs_dir%/%kernel.environment%_paynow.log"
+                name="crehler_paynow_handler"
+                type="stream">
+            <monolog:channels>
+                <monolog:channel>crehler_paynow</monolog:channel>
+            </monolog:channels>
+        </monolog:handler>
+    </monolog:config>
+    <services>
+        <service id="Crehler\PayNowPayment\Subscriber\CheckoutConfirmSubscriber" >
+            <argument id="Crehler\PayNowPayment\Controller\PaymentMethods\RetrieverController" type="service"/>
+            <argument id="Shopware\Core\System\SystemConfig\SystemConfigService" type="service"/>
+            <tag name="kernel.event_subscriber" />
+        </service>
+
+        <service id="Crehler\PayNowPayment\Subscriber\FooterSubscriber" >
+            <argument id="Shopware\Core\System\SystemConfig\SystemConfigService" type="service"/>
+            <argument id="Crehler\PayNowPayment\Controller\PaymentMethods\RetrieverController" type="service"/>
+            <tag name="kernel.event_subscriber"/>
+        </service>
+
+        <service id="Crehler\PayNowPayment\Subscriber\CustomerSetDefaultBankSubscriber" >
+            <argument id="customer.repository" type="service" />
+            <argument id="Symfony\Component\HttpFoundation\RequestStack" type="service" />
+            <tag name="kernel.event_subscriber" />
+        </service>
+
+        <service id="Crehler\PayNowPayment\Controller\PaymentMethods\RetrieverController" public="true">
+            <argument id="Shopware\Core\System\SystemConfig\SystemConfigService" type="service"/>
+            <argument id="monolog.logger.crehler_paynow" type="service"/>
+            <argument id="PayNow\Client" type="service"/>
+        </service>
+
+        <service id="Crehler\PayNowPayment\Controller\OrderNotificationController" public="true">
+            <argument type="service" id="order.repository"/>
+            <argument type="service" id="order_transaction.repository"/>
+            <argument id="monolog.logger.crehler_paynow" type="service"/>
+            <argument id="Shopware\Core\System\SystemConfig\SystemConfigService" type="service"/>
+            <argument id="Shopware\Core\Checkout\Order\Aggregate\OrderTransaction\OrderTransactionStateHandler" type="service"/>
+            <argument id="Crehler\PayNowPayment\Service\PayNowServicesFactory" type="service"/>
+            <call method="setContainer">
+                <argument type="service" id="service_container"/>
+            </call>
+        </service>
+
+        <service id="Crehler\PayNowPayment\Controller\StatusCheckController" public="true">
+            <argument type="service" id="Crehler\PayNowPayment\Controller\StatusCheck\StatusCheckRoute"/>
+            <call method="setContainer">
+                <argument type="service" id="service_container"/>
+            </call>
+        </service>
+
+        <service id="Crehler\PayNowPayment\Controller\PaymentReturnController" public="true">
+            <argument type="service" id="order_transaction.repository"/>
+            <argument id="Shopware\Storefront\Page\GenericPageLoader" type="service"/>
+            <call method="setContainer">
+                <argument type="service" id="service_container"/>
+            </call>
+            <call method="setTwig">
+                <argument type="service" id="twig"/>
+            </call>
+        </service>
+
+        <service id="Crehler\PayNowPayment\Controller\RefundController" public="true">
+            <argument type="service" id="order_transaction.repository"/>
+            <argument id="monolog.logger.crehler_paynow" type="service"/>
+            <argument type="service" id="order.repository"/>
+            <argument id="Shopware\Core\Checkout\Order\Aggregate\OrderTransaction\OrderTransactionStateHandler" type="service"/>
+            <argument id="paynow_refund_history.repository" type="service"/>
+            <argument id="Crehler\PayNowPayment\Controller\PaymentMethods\RetrieverController" type="service"/>
+            <argument type="service" id="PayNow\Client"/>
+            <argument id="Crehler\PayNowPayment\Service\RefundService" type="service"/>
+            <call method="setContainer">
+                <argument type="service" id="service_container"/>
+            </call>
+        </service>
+
+        <service id="Crehler\PayNowPayment\Entity\PaymentTokenDefinition">
+            <tag name="shopware.entity.definition" entity="paynow_payment_tokens"/>
+        </service>
+
+        <service id="Crehler\PayNowPayment\Entity\PaymentRefundHistoryDefinition">
+            <tag name="shopware.entity.definition" entity="paynow_refund_history"/>
+        </service>
+
+        <service id="Crehler\PayNowPayment\Entity\PaynowIdempotencyKeyDefinition">
+            <tag name="shopware.entity.definition" entity="paynow_idempotency_key"/>
+        </service>
+
+        <service id="Crehler\PayNowPayment\Service\IdempotencyKeyGenerator">
+            <argument id="paynow_idempotency_key.repository" type="service"/>
+        </service>
+
+
+        <service id="Crehler\PayNowPayment\Service\RefundService">
+            <argument type="service" id="order.repository"/>
+            <argument type="service" id="order_transaction.repository"/>
+            <argument id="paynow_refund_history.repository" type="service"/>
+        </service>
+
+        <service id="Crehler\PayNowPayment\Factory\TransactionDtoFactory">
+            <argument type="service" id="paynow_payment_tokens.repository"/>
+            <argument type="service" id="router"/>
+        </service>
+
+        <service id="Crehler\PayNowPayment\Factory\TransactionResponseDtoFactory">
+        </service>
+
+        <service id="Crehler\PayNowPayment\Service\PayNowService">
+            <argument id="monolog.logger.crehler_paynow" type="service"/>
+            <argument id="Paynow\Service\Payment" type="service"/>
+            <argument id="Crehler\PayNowPayment\Factory\TransactionDtoFactory" type="service"/>
+            <argument id="order_transaction.repository" type="service"/>
+            <argument type="service" id="event_dispatcher"/>
+            <argument id="Crehler\PayNowPayment\Service\IdempotencyKeyGenerator" type="service"/>
+            <tag name="shopware.payment.method.async" />
+        </service>
+
+        <service id="Crehler\PayNowPayment\Service\PayNowServicesFactory">
+            <argument id="Shopware\Core\System\SystemConfig\SystemConfigService" type="service"/>
+            <argument id="parameter_bag" type="service"/>
+        </service>
+
+
+        <service id="PayNow\Client">
+            <factory service="Crehler\PayNowPayment\Service\PayNowServicesFactory" method="factorClient"/>
+        </service>
+        <service id="Paynow\Service\Payment">
+            <factory service="Crehler\PayNowPayment\Service\PayNowServicesFactory" method="factorPayment"/>
+        </service>
+
+        <service id="Crehler\PayNowPayment\Subscriber\DebuggerSubscriber">
+            <argument id="Shopware\Core\System\SystemConfig\SystemConfigService" type="service"/>
+            <argument id="monolog.logger.crehler_paynow" type="service"/>
+            <argument id="PayNow\Client" type="service"/>
+            <tag name="kernel.event_subscriber"/>
+        </service>
+
+        <service id="Crehler\PayNowPayment\Controller\StatusCheck\StatusCheckRoute" >
+            <argument type="service" id="order_transaction.repository"/>
+        </service>
+    </services>
+</container>

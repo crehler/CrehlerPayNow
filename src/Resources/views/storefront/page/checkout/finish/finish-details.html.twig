@@ -1,0 +1,13 @@
+{% sw_extends '@Storefront/storefront/page/checkout/finish/finish-details.html.twig' %}
+
+{% block page_checkout_finish_order_payment_method %}
+    <p>
+        <strong>{{ "checkout.finishInfoPayment"|trans|sw_sanitize }}</strong>
+        {{ page.order.transactions.last.paymentMethod.translated.name }}
+        {% if page.order.transactions|first.stateMachineState.technicalName  is same as('cancelled') %}
+            <div>
+                <strong class="text-danger">{{ "paynow.paymentConfirmation.paymentCancelled"|trans|sw_sanitize }}</strong>
+            </div>
+        {% endif %}
+    </p>
+{% endblock %}

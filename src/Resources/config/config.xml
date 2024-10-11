@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/shopware/platform/master/src/Core/System/SystemConfig/Schema/config.xsd">
+
+    <card>
+        <input-field type="password">
+            <name>ApiKey</name>
+            <label>API Key</label>
+            <label lang="pl-PL">Klucz API</label>
+        </input-field>
+        <input-field type="password">
+            <name>SingatureKeyLabel</name>
+            <label lang="en-GB">Singature Key Label</label>
+            <label lang="pl-PL">Klucz - podpis</label>
+        </input-field>
+        <component name="paynow-settings">
+            <name>sandboxCheckCredentials</name>
+        </component>
+        <input-field type="bool">
+            <name>EnableLevelZero</name>
+            <label>Show payment methods</label>
+            <label lang="pl-PL">Pokaż metody płatności</label>
+        </input-field>
+        <input-field type="bool">
+            <name>EnableSandbox</name>
+            <label lang="pl-PL">Tryb sandbox</label>
+            <label>Sandbox mode</label>
+        </input-field>
+        <input-field type="bool">
+            <name>EnableCarts</name>
+            <label>Show mastercard, googlePay and visa (after validation only) - required for non PLN transactions</label>
+            <label lang="pl-PL">Pokaż płatność mastercard, visa i googlePay (po weryfikacji konta na stronie paynow) - wymagane dla walut innych niż PLN</label>
+        </input-field>
+        <input-field type="int">
+            <name>WaitingTime</name>
+            <label>Waiting time (sec)</label>
+            <label lang="pl-PL">Czas oczekiwania (sekundy)</label>
+            <defaultValue>45</defaultValue>
+        </input-field>
+    </card>
+    <card>
+        <title>Debugging</title>
+        <title lang="de-DE">Debuggen</title>
+        <title lang="pl-PL">Debugowanie</title>
+        <input-field type="bool">
+            <name>enableDebugLogging</name>
+            <label>Enable logging of API communication to the file</label>
+            <label lang="de-DE">Aktivieren Sie die Protokollierung der API-Kommunikation in der Datei</label>
+            <label lang="pl-PL">Włącz logowanie komunikacji z API do pliku</label>
+        </input-field>
+        <input-field type="bool">
+            <name>enableLogAnonymize</name>
+            <label>Anonymize the saved data</label>
+            <label lang="de-DE">Anonymisieren Sie die gespeicherten Daten</label>
+            <label lang="pl-PL">Anonimizuj zapisywane dane</label>
+        </input-field>
+    </card>
+</config>

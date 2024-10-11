@@ -1,0 +1,11 @@
+{
+  "paynow": {
+    "paymentConfirmation": {
+      "waitingText": "Oczekiwanie na potwierdzenie płatności...",
+      "waitingSuccessText": "Płatność została potwierdzona",
+      "waitingFailText": "Upłynął czas oczekiwania na płatność",
+      "changePaymentMethodButton": "Zmień formę płatności",
+      "paymentCancelled": "Twoja płatność zostałą anulowana"
+    }
+  }
+}
