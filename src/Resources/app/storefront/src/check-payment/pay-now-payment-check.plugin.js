@@ -54,7 +54,7 @@ export default class PayNowPaymentCheckPlugin extends Plugin {
 
     _showPaymentState(response) {
         let status = JSON.parse(response);
-        console.log(status)
+
         if (status.success) {
             this._changeButtonText(this.options.waitingSuccessText);
             this._changeLocation(this.options.successUrl);

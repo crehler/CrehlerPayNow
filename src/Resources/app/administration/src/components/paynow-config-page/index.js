@@ -42,8 +42,7 @@ Component.register('paynow-settings', {
     methods: {
         async onTestCredentials() {
             try {
-                let res = await this.PayNowOrderService.testApi();
-                console.log(res)
+                await this.PayNowOrderService.testApi();
                 this.createNotificationSuccess({
                     title: 'Success',
                     message: this.$tc('pay-now-order.notification.testSucces'),

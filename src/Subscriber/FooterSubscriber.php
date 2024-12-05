@@ -22,11 +22,12 @@ class FooterSubscriber implements EventSubscriberInterface
 
     public function __construct(
         private readonly SystemConfigService $systemConfigService,
-        private readonly RetrieverController  $paymentMethods
+        private readonly RetrieverController $paymentMethods
     )
     {
         $this->cache = new FilesystemAdapter(self::CACHE_NAMESPACE);
     }
+
     public static function getSubscribedEvents(): array
     {
         return [
@@ -34,24 +35,24 @@ class FooterSubscriber implements EventSubscriberInterface
         ];
     }
 
-    public function onFooterLoaded(FooterPageletLoadedEvent $event)
+    public function onFooterLoaded(FooterPageletLoadedEvent $event): void
     {
         $pageLet = $event->getPagelet();
         $paymentMethodsCache = $this->cache->getItem(self::CACHE_KEY_PAYMENT_METHODS);
 
-        if($paymentMethodsCache->get()){
-            $pageLet->addExtension("paymentMethods",$paymentMethodsCache->get());
+        if (!$paymentMethodsCache && property_exists($paymentMethodsCache->get(), 'data')) {
+            $pageLet->addExtension("paymentMethods", $paymentMethodsCache->get());
             return;
         };
 
         /** @var PaymentResponse $footerBankIcons */
         $footerBankIcons = $this->paymentMethods->loadActive($event->getSalesChannelContext())->getResult();
+
         $paymentMethodsCache->set($footerBankIcons);
         $paymentMethodsCache->expiresAfter(self::CACHE_LIFETIME);
 
         $this->cache->save($paymentMethodsCache);
 
-        $pageLet->addExtension("paymentMethods",$footerBankIcons);
-
+        $pageLet->addExtension("paymentMethods", $footerBankIcons);
     }
 }

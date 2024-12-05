@@ -1,0 +1,61 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Paynow Payment Notification",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/paynowpayment/notification": {
+      "post": {
+        "description": "Set the current status for order transaction",
+        "operationId": "paynowNotificationRoute",
+        "tags": ["Store API", "paynow"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "paymentId": {
+                    "type": "string",
+                    "description": "Paynow id"
+                  },
+                  "externalId": {
+                    "type": "string",
+                    "description": "Shopware order number"
+                  },
+                  "status": {
+                    "type": "string",
+                    "description": "Status of payment"
+                  }
+                },
+                "required": ["paymentId", "externalId", "status"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "returned status"
+          },
+          "400": {
+            "description": "failed"
+          }
+        }
+      }
+    },
+    "/store-api/paynowpayment/payment-methods": {
+      "get": {
+        "description": "Check available payment methods",
+        "operationId": "paymentMethodsRoute",
+        "tags": ["Store API", "payment methods", "paynow"],
+        "responses": {
+          "200": {
+            "description": "returned status"
+          }
+        }
+      }
+    }
+  }
+}

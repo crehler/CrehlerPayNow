@@ -7,8 +7,10 @@
 # 2.0.1
 - SW6.5 compatibility
 
-# 3.0.0
-- SW6.6 compatibility
+# 2.0.2
+- Security update
 
-# 3.0.3
+# 2.0.3
 - Fix payments for products with promotions
+# 2.0.4
+- Fix javascript errors

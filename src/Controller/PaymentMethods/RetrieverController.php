@@ -11,7 +11,6 @@ use Shopware\Core\Framework\Plugin\Exception\DecorationPatternException;
 use Shopware\Core\System\SalesChannel\SalesChannelContext;
 use Shopware\Core\System\SystemConfig\SystemConfigService;
 use Symfony\Component\DependencyInjection\Attribute\Autoconfigure;
-use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\Routing\Attribute\Route;
 use Paynow\Exception\PaynowException;
 use Paynow\Service\Payment;
@@ -26,7 +25,6 @@ class RetrieverController extends AbstractRetrieveController
         private readonly SystemConfigService $systemConfigService,
         private readonly LoggerInterface     $logger,
         private readonly Client              $client,
-        private readonly RequestStack        $requestStack
     )
     {
     }
@@ -37,16 +35,6 @@ class RetrieverController extends AbstractRetrieveController
     }
 
     /**
-     * @OA\Get(
-     *      path="/store-api/paynowpayment/payment-methods",
-     *      description="Check available payment methods",
-     *      operationId="payment methods route",
-     *      tags={"Store API","payment methods","paynow"},
-     *     @OA\Response(
-     *          response="200",
-     *          description="returned status"
-     *     )
-     * )
      * @param SalesChannelContext $context
      * @return PaymentResponse
      */

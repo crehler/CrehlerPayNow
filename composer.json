@@ -3,7 +3,7 @@
     "description": "PayNow Shopware Integration",
     "type": "shopware-platform-plugin",
     "license": "proprietary",
-    "version": "3.0.3",
+    "version": "2.0.4",
     "authors": [
         {
             "name": "Crehler Sp. z o. o.",
@@ -51,6 +51,6 @@
         "php-http/guzzle7-adapter": "^1.0",
         "pay-now/paynow-php-sdk": "^2.1",
         "brick/phonenumber": "^0.4.0",
-        "../../../vendor/shopware/core": "~v6.6"
+        "shopware/core": "~v6.5"
     }
 }

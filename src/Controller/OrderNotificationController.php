@@ -36,44 +36,6 @@ class OrderNotificationController extends AbstractController
     }
 
     /**
-     * @OA\Post(
-     *      path="/paynowpayment/notification",
-     *      description="Set the current status for order transaction",
-     *      operationId="paynow notification route",
-     *      tags={"Store API","paynow"},
-     *     @OA\Parameter(
-     *          parameter="paymentId",
-     *          name="paymentId",
-     *          in="content",
-     *          description="Paynow id",
-     *          required=true,
-     *          @OA\Schema(type="string"),
-     *      ),
-     *      @OA\Parameter(
-     *          parameter="externalId",
-     *          name="externalId",
-     *          in="content",
-     *          description="Shopware order number",
-     *          required=true,
-     *          @OA\Schema(type="string"),
-     *      ),
-     *          @OA\Parameter(
-     *          parameter="status",
-     *          name="status",
-     *          in="content",
-     *          description="Status of payment",
-     *          required=true,
-     *          @OA\Schema(type="string"),
-     *      ),
-     *     @OA\Response(
-     *          response="200",
-     *          description="returned status"
-     *      ),
-     *     @OA\Response(
-     *          response="400",
-     *          description="failed"
-     *     )
-     * )
      * @param Request $request
      * @return Response
      */
