@@ -15,3 +15,6 @@
 
 # 2.0.4
 - Javascript-Fehler beheben
+
+# 2.0.5
+- Aktualisierung der Protokollierung von Zahlungsfehlern 

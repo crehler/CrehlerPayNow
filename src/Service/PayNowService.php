@@ -5,12 +5,11 @@ namespace Crehler\PayNowPayment\Service;
 
 use Crehler\PayNowPayment\Event\PaymentAuthorizeRequestEvent;
 use Crehler\PayNowPayment\Event\PaymentAuthorizeResponseEvent;
-use Monolog\Logger;
-use Paynow\Service\Payment;
+use Paynow\Exception\Error;
+use Paynow\Exception\PaynowException;
 use Crehler\PayNowPayment\Common\Serializer;
 use Crehler\PayNowPayment\Factory\TransactionDtoFactory;
 use Psr\Log\LoggerInterface;
-use Shopware\Core\Checkout\Cart\SalesChannel\CartService;
 use Shopware\Core\Checkout\Payment\Cart\AsyncPaymentTransactionStruct;
 use Shopware\Core\Checkout\Payment\Cart\PaymentHandler\AsynchronousPaymentHandlerInterface;
 use Shopware\Core\Checkout\Payment\Exception\AsyncPaymentProcessException;
@@ -61,8 +60,16 @@ class PayNowService implements AsynchronousPaymentHandlerInterface
         try {
             $this->eventDispatcher->dispatch(new PaymentAuthorizeRequestEvent($transaction, $salesChannelContext, $this->payment->getClient(), $normalizedTransaction, $transaction->getOrderTransaction()->getId()));
             $result = $this->payment->authorize($normalizedTransaction, $idempotencyKey);
-        } catch (\Throwable $exception) {
-            $this->logger->error("Error (" . $exception->getCode() . ") registering the transaction for order " . $transaction->getOrder()->getOrderNumber() . "  " . $exception->getMessage());
+        } catch (PaynowException $exception) {
+            $this->logger->error("Error (" . $exception->getCode() . ") registering the transaction for order " .
+            $transaction->getOrder()->getOrderNumber() . "  " . $exception->getMessage());
+
+            if (!empty ($exception->getErrors())) {
+                array_map(function (Error $error) {
+                    $this->logger->error("Paynow error type: {$error->getType()}, message: {$error->getMessage()}");
+                }, $exception->getErrors());
+            }
+
             throw new AsyncPaymentProcessException(
                 $transaction->getOrderTransaction()->getId(),
                 'An error occurred during the communication with external payment gateway' . PHP_EOL . $exception->getMessage()

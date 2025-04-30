@@ -14,3 +14,5 @@
 - Fix payments for products with promotions
 # 2.0.4
 - Fix javascript errors
+# 2.0.5
+- Update logging payment errors`
