@@ -12,3 +12,6 @@
 
 # 3.0.3
 - Fix payments for products with promotions
+
+# 3.0.4
+- Aktualisierung der Protokollierung von Zahlungsfehlern, Hinzufügen der Filterung von Zahlungen

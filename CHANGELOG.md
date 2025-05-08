@@ -12,3 +12,6 @@
 
 # 3.0.3
 - Fix payments for products with promotions
+
+# 3.0.4
+- Update logging payment errors, add filtering payments

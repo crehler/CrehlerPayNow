@@ -9,8 +9,7 @@ abstract class AbstractRetrieveController
 {
     abstract public function getDecorated(): AbstractRetrieveController;
 
-    abstract public function load(SalesChannelContext $context): PaymentResponse;
-}
+    abstract public function load(SalesChannelContext $context, ?int $checkoutTotalAmount = 0): PaymentResponse;}
 
 
 
