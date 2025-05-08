@@ -43,15 +43,14 @@ class RetrieverController extends AbstractRetrieveController
         name: 'store-api.paynowpayment.paymentmethods',
         methods: ['GET']
     )]
-    public function load(SalesChannelContext $context): PaymentResponse
+    public function load(SalesChannelContext $context, ?int $checkoutTotalAmount = 0): PaymentResponse
     {
         $paymentMethodsCollection = new PaymentMethodsCollection();
 
         try {
             $payment = new Payment($this->client);
 
-            $paymentMethods = $payment->getPaymentMethods($context->getCurrency()->getIsoCode(), 0);
-
+            $paymentMethods = $payment->getPaymentMethods($context->getCurrency()->getIsoCode(), $checkoutTotalAmount * 100);
             $availablePaymentMethods = $paymentMethods->getAll() ?? [];
 
             /** @var PaymentMethod $method */

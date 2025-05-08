@@ -40,8 +40,9 @@ class CheckoutConfirmSubscriber implements EventSubscriberInterface
     {
         $payNowHandler = PayNowService::class;
         $payments = $event->getPage()->getPaymentMethods();
+        $cart = $event->getPage()->getCart();
         if ($this->systemConfigService->get('CrehlerPayNowPayment.config.EnableLevelZero')) {
-            $newPaymentMethods = $this->paymentMethods->load($event->getSalesChannelContext());
+            $newPaymentMethods = $this->paymentMethods->load($event->getSalesChannelContext(), (int) $cart->getPrice()->getTotalPrice());
 
             foreach ($payments as $payment) {
                 if ($payment->getHandlerIdentifier() === $payNowHandler) {
