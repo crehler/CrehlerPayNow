@@ -29,7 +29,7 @@ class TransactionDtoFactory
 
     public function createTransactionDto(OrderEntity $order,string $returnUrl, ?string $customerBankId, string $transactionId): TransactionDto
     {
-        $customerNumber = $order->getBillingAddress()->getPhoneNumber();
+        $customerNumber = $order->getBillingAddress()?->getPhoneNumber();
         $orderCustomer = $order->getOrderCustomer();
 
         $buyer = new TransactionBuyerDto();
@@ -78,9 +78,10 @@ class TransactionDtoFactory
         $transactionDto = new TransactionDto();
 
         if ($customerNumber) {
-            $phone = $this->createPhoneNo($customerNumber, $order->getBillingAddress()->getCountry()->getIso());
+            $phone = $this->createPhoneNo($customerNumber, $order->getBillingAddress()?->getCountry()?->getIso());
             $buyer->setPhone($phone);
         }
+
         if ($customerBankId) {
             $transactionDto->setPaymentMethodId($customerBankId);
         }
@@ -94,14 +95,14 @@ class TransactionDtoFactory
         $transactionDto->setAmount(OrderAmountFormat::floatToInt($order->getAmountTotal()));
         $transactionDto->setBuyer($buyer);
         $transactionDto->setContinueUrl($returnUrl);
-        $transactionDto->setCurrency($order->getCurrency()->getIsoCode());
+        $transactionDto->setCurrency($order->getCurrency()?->getIsoCode());
         $transactionDto->setDescription($order->getOrderNumber());
         $transactionDto->setExternalId($order->getOrderNumber());
 
         return $transactionDto;
     }
 
-    private function createPhoneNo($numberCustomer, $iso): TransactionBuyerPhoneDto
+    private function createPhoneNo(string $iso, ?string $numberCustomer): TransactionBuyerPhoneDto
     {
         $phone = new TransactionBuyerPhoneDto();
 
@@ -109,18 +110,11 @@ class TransactionDtoFactory
             $number = PhoneNumber::parse($numberCustomer);
             $phone->setPrefix("+" .$number->getCountryCode());
             $phone->setNumber($number->getNationalNumber());
-        }catch (\Throwable $e){
+        } catch (\Throwable $e){
             $country = PhoneNumber::getExampleNumber($iso);
             $phone->setPrefix("+" . $country->getCountryCode());
             $phone->setNumber($numberCustomer);
         }
         return $phone;
-    }
-
-    private function fixTotalAmount(OrderEntity $orderEntity, TransactionOrderDto $transactionOrderDto, int $sumPrice): void
-    {
-        if ($transactionOrderDto->getPrice()) {
-
-        }
     }
 }

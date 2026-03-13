@@ -11,12 +11,8 @@ Wtyczka Paynow dodaje szybkie płatności i płatności BLIK do sklepu na Shopwa
 * [Licencja](#licencja)
 
 ## Wymgania
-- PHP od wersji 8.2
-- Shopware w wersji 6.6.*
-
-## Starsze wersje
-- 2.0.3 Shopware 6.5
-- 1.0.39 Shopware 6.4
+- PHP od wersji 7.4
+- Shopware w wersji 6.4.3.* lub 6.4.*
 
 ## Instalacja
 #### 1. Przejdź do strony administracyjnej sklepu

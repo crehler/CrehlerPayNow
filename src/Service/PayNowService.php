@@ -2,7 +2,6 @@
 
 namespace Crehler\PayNowPayment\Service;
 
-
 use Crehler\PayNowPayment\Event\PaymentAuthorizeRequestEvent;
 use Crehler\PayNowPayment\Event\PaymentAuthorizeResponseEvent;
 use Monolog\Logger;
@@ -11,22 +10,20 @@ use Crehler\PayNowPayment\Common\Serializer;
 use Crehler\PayNowPayment\Factory\TransactionDtoFactory;
 use Psr\Log\LoggerInterface;
 use Shopware\Core\Checkout\Cart\SalesChannel\CartService;
-use Shopware\Core\Checkout\Payment\Cart\AsyncPaymentTransactionStruct;
-use Shopware\Core\Checkout\Payment\Cart\PaymentHandler\AsynchronousPaymentHandlerInterface;
-use Shopware\Core\Checkout\Payment\Exception\AsyncPaymentProcessException;
-use Shopware\Core\Checkout\Payment\Exception\CustomerCanceledAsyncPaymentException;
+use Shopware\Core\Checkout\Order\Aggregate\OrderTransaction\OrderTransactionEntity;
+use Shopware\Core\Checkout\Payment\Cart\PaymentHandler\AbstractPaymentHandler;
+use Shopware\Core\Checkout\Payment\Cart\PaymentHandler\PaymentHandlerType;
+use Shopware\Core\Checkout\Payment\Cart\PaymentTransactionStruct;
+use Shopware\Core\Checkout\Payment\PaymentException;
+use Shopware\Core\Framework\Context;
 use Shopware\Core\Framework\DataAbstractionLayer\EntityRepository;
-use Shopware\Core\Framework\Validation\DataBag\RequestDataBag;
-use Shopware\Core\System\SalesChannel\SalesChannelContext;
-use Symfony\Component\DependencyInjection\Attribute\Autoconfigure;
+use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
+use Shopware\Core\Framework\Struct\Struct;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
-
-#[Autoconfigure(tags: [['name' => 'shopware.payment.method.async']])]
-class PayNowService implements AsynchronousPaymentHandlerInterface
-
+class PayNowService extends AbstractPaymentHandler
 {
     const PAYNOW_PAYMENT_ID = 'paynowPaymentId';
 
@@ -44,50 +41,79 @@ class PayNowService implements AsynchronousPaymentHandlerInterface
         $this->payment = $factory->factorPayment();
     }
 
-    /**
-     * @throws AsyncPaymentProcessException
-     */
-    public function pay(AsyncPaymentTransactionStruct $transaction, RequestDataBag $dataBag, SalesChannelContext $salesChannelContext): RedirectResponse
+    public function supports(PaymentHandlerType $type, string $paymentMethodId, Context $context): bool
     {
-        $idempotencyKey = $this->idempotencyKeyGenerator->generate($transaction->getOrderTransaction(), $salesChannelContext->getContext());
-        $customerBankId = null;
-        if (isset($salesChannelContext->getCustomer()->getCustomFields()['pay_now_default_payment_selected_bank'])) {
-            $customerBankId = $salesChannelContext->getCustomer()->getCustomFields()['pay_now_default_payment_selected_bank'];
-        }
+        return false;
+    }
 
-        $transactionDto = $this->transactionDtoFactory->createTransactionDto($transaction->getOrder(), $transaction->getReturnUrl(), $customerBankId, $transaction->getOrderTransaction()->getId());
-        $normalizedTransaction = Serializer::getSerializer()->normalize($transactionDto, 'json');
-
+    public function pay(Request $request, PaymentTransactionStruct $transaction, Context $context, ?Struct $validateStruct): ?RedirectResponse
+    {
         try {
-            $this->eventDispatcher->dispatch(new PaymentAuthorizeRequestEvent($transaction, $salesChannelContext, $this->payment->getClient(), $normalizedTransaction, $transaction->getOrderTransaction()->getId()));
+            $orderTransaction = $this->getOrderTransaction($transaction->getOrderTransactionId(), $context);
+
+            $idempotencyKey = $this->idempotencyKeyGenerator->generate($orderTransaction, $context);
+            $order = $orderTransaction->getOrder();
+
+            $customer = $order->getOrderCustomer();
+
+            $customerBankId = null;
+            if ($customer && isset($customer->getCustomFields()['pay_now_default_payment_selected_bank'])) {
+                $customerBankId = $customer->getCustomFields()['pay_now_default_payment_selected_bank'];
+            }
+
+            $transactionDto = $this->transactionDtoFactory->createTransactionDto($order, $transaction->getReturnUrl(), $customerBankId, $transaction->getOrderTransactionId());
+            $normalizedTransaction = Serializer::getSerializer()->normalize($transactionDto, 'json');
+
+            $this->eventDispatcher->dispatch(new PaymentAuthorizeRequestEvent($transaction, null, $this->payment->getClient(), $normalizedTransaction, $transaction->getOrderTransactionId()));
             $result = $this->payment->authorize($normalizedTransaction, $idempotencyKey);
+
         } catch (\Throwable $exception) {
-            $this->logger->error("Error (" . $exception->getCode() . ") registering the transaction for order " . $transaction->getOrder()->getOrderNumber() . "  " . $exception->getMessage());
-            throw new AsyncPaymentProcessException(
-                $transaction->getOrderTransaction()->getId(),
+            $this->logger->error("Error (" . $exception->getCode() . ") registering the transaction for order " . $order->getOrderNumber() . "  " . $exception->getMessage());
+            dd($exception);
+            throw PaymentException::asyncProcessInterrupted(
+                $transaction->getOrderTransactionId(),
                 'An error occurred during the communication with external payment gateway' . PHP_EOL . $exception->getMessage()
             );
         }
 
-        $this->eventDispatcher->dispatch(new PaymentAuthorizeResponseEvent($transaction, $salesChannelContext, $result));
+        $this->eventDispatcher->dispatch(new PaymentAuthorizeResponseEvent($transaction, null, $result));
 
         $data = $result->getPaymentId();
 
         $this->orderTransactionRepository->upsert([[
-            'id' => $transaction->getOrderTransaction()->getId(),
+            'id' => $transaction->getOrderTransactionId(),
             'customFields' => [
                 self::PAYNOW_PAYMENT_ID => $data
             ]
-        ]], $salesChannelContext->getContext());
+        ]], $context);
 
         return new RedirectResponse($result->getRedirectUrl());
     }
 
     /**
-     * @throws CustomerCanceledAsyncPaymentException
+     * This method is called after redirect from PayNow payment provider
      */
-    public function finalize(AsyncPaymentTransactionStruct $transaction, Request $request, SalesChannelContext $salesChannelContext): void
+    public function finalize(Request $request, PaymentTransactionStruct $transaction, Context $context): void
     {
+        if ($request->query->getBoolean('cancel') || $request->query->get('error')) {
+            throw PaymentException::customerCanceled(
+                $transaction->getOrderTransactionId(),
+                'Customer canceled the payment on the PayNow page'
+            );
+        }
+    }
 
+    /**
+     * Helper method to fetch order data from transaction ID
+     */
+    private function getOrderTransaction(string $orderTransactionId, Context $context): OrderTransactionEntity
+    {
+        $criteria = new Criteria([$orderTransactionId]);
+        $criteria->addAssociation('order.orderCustomer');
+        $criteria->addAssociation('order.lineItems');
+        $criteria->addAssociation('order.addresses');
+        $criteria->addAssociation('order.currency');
+
+        return $this->orderTransactionRepository->search($criteria, $context)->first();
     }
 }

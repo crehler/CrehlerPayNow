@@ -11,7 +11,7 @@
 namespace Crehler\PayNowPayment\Event;
 
 use Paynow\Response\Payment\Authorize;
-use Shopware\Core\Checkout\Payment\Cart\AsyncPaymentTransactionStruct;
+use Shopware\Core\Checkout\Payment\Cart\PaymentTransactionStruct;
 use Shopware\Core\Framework\Context;
 use Shopware\Core\Framework\Event\ShopwareSalesChannelEvent;
 use Shopware\Core\System\SalesChannel\SalesChannelContext;
@@ -21,40 +21,45 @@ class PaymentAuthorizeResponseEvent extends Event implements ShopwareSalesChanne
 {
     protected Authorize $authorize;
 
-    protected AsyncPaymentTransactionStruct $transaction;
+    protected PaymentTransactionStruct $transaction;
 
-    protected SalesChannelContext $salesChannelContext;
+    protected ?SalesChannelContext $salesChannelContext;
 
-    public function __construct(AsyncPaymentTransactionStruct $transaction, SalesChannelContext $salesChannelContext, Authorize $authorize)
+    public function __construct(PaymentTransactionStruct $transaction, ?SalesChannelContext $salesChannelContext, Authorize $authorize)
     {
         $this->transaction = $transaction;
         $this->salesChannelContext = $salesChannelContext;
         $this->authorize = $authorize;
     }
 
-    /**
-     * @return Authorize
-     */
-    public function getAuthorize(): Authorize
+    public function getName(): string
     {
-        return $this->authorize;
+        return 'checkout.payment.paynow.authorize.response';
     }
 
     /**
-     * @return AsyncPaymentTransactionStruct
+     * @return PaymentTransactionStruct
      */
-    public function getTransaction(): AsyncPaymentTransactionStruct
+    public function getTransaction(): PaymentTransactionStruct
     {
         return $this->transaction;
     }
 
     public function getContext(): Context
     {
-        return $this->salesChannelContext->getContext();
+        return $this->salesChannelContext ? $this->salesChannelContext->getContext() : Context::createDefaultContext();
     }
 
+    /**
+     * @return SalesChannelContext
+     */
     public function getSalesChannelContext(): SalesChannelContext
     {
         return $this->salesChannelContext;
+    }
+
+    public function getAuthorize(): Authorize
+    {
+        return $this->authorize;
     }
 }

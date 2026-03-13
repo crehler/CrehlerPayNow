@@ -11,12 +11,7 @@ use Shopware\Core\System\SalesChannel\StoreApiResponse;
 
 class PaymentResponse  extends StoreApiResponse
 {
-    /**
-     * @var ArrayStruct
-     */
-    protected $object;
-
-    public function __construct($paymentMethodsArray)
+    public function __construct(protected PaymentMethodsCollection $paymentMethodsArray)
     {
         parent::__construct(new ArrayStruct([
             'paymentMethods' => $paymentMethodsArray,
