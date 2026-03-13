@@ -1,13 +1,11 @@
 <?php
 
+declare(strict_types=1);
 
 namespace Crehler\PayNowPayment\Subscriber;
 
-
-use Crehler\PayNowPayment\Controller\PaymentMethods\AbstractRetrieveController;
 use Crehler\PayNowPayment\Controller\PaymentMethods\PaymentResponse;
 use Crehler\PayNowPayment\Controller\PaymentMethods\RetrieverController;
-use Shopware\Core\System\SystemConfig\SystemConfigService;
 use Shopware\Storefront\Pagelet\Footer\FooterPageletLoadedEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\Cache\Adapter\FilesystemAdapter;
@@ -21,12 +19,12 @@ class FooterSubscriber implements EventSubscriberInterface
     protected FilesystemAdapter $cache;
 
     public function __construct(
-        private readonly SystemConfigService $systemConfigService,
-        private readonly RetrieverController  $paymentMethods
+        private readonly RetrieverController $paymentMethods
     )
     {
         $this->cache = new FilesystemAdapter(self::CACHE_NAMESPACE);
     }
+
     public static function getSubscribedEvents(): array
     {
         return [
@@ -39,10 +37,10 @@ class FooterSubscriber implements EventSubscriberInterface
         $pageLet = $event->getPagelet();
         $paymentMethodsCache = $this->cache->getItem(self::CACHE_KEY_PAYMENT_METHODS);
 
-        if($paymentMethodsCache->get()){
-            $pageLet->addExtension("paymentMethods",$paymentMethodsCache->get());
+        if ($paymentMethodsCache->isHit()) {
+            $pageLet->addExtension("paymentMethods", $paymentMethodsCache->get());
             return;
-        };
+        }
 
         /** @var PaymentResponse $footerBankIcons */
         $footerBankIcons = $this->paymentMethods->loadActive($event->getSalesChannelContext())->getResult();
@@ -51,7 +49,7 @@ class FooterSubscriber implements EventSubscriberInterface
 
         $this->cache->save($paymentMethodsCache);
 
-        $pageLet->addExtension("paymentMethods",$footerBankIcons);
+        $pageLet->addExtension("paymentMethods", $footerBankIcons);
 
     }
 }

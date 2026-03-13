@@ -63,31 +63,33 @@ class PayNowService extends AbstractPaymentHandler
 
             $transactionDto = $this->transactionDtoFactory->createTransactionDto($order, $transaction->getReturnUrl(), $customerBankId, $transaction->getOrderTransactionId());
             $normalizedTransaction = Serializer::getSerializer()->normalize($transactionDto, 'json');
-
-            $this->eventDispatcher->dispatch(new PaymentAuthorizeRequestEvent($transaction, null, $this->payment->getClient(), $normalizedTransaction, $transaction->getOrderTransactionId()));
+            $this->eventDispatcher->dispatch(new PaymentAuthorizeRequestEvent($transaction, null, $this->payment->getClient(), $normalizedTransaction, $idempotencyKey));
             $result = $this->payment->authorize($normalizedTransaction, $idempotencyKey);
 
+            $this->eventDispatcher->dispatch(new PaymentAuthorizeResponseEvent($transaction, $context, $result));
+
+            $data = $result->getPaymentId();
+
+            $this->orderTransactionRepository->upsert([[
+                'id' => $transaction->getOrderTransactionId(),
+                'customFields' => [
+                    self::PAYNOW_PAYMENT_ID => $data
+                ]
+            ]], $context);
+
+            return new RedirectResponse($result->getRedirectUrl());
         } catch (\Throwable $exception) {
-            $this->logger->error("Error (" . $exception->getCode() . ") registering the transaction for order " . $order->getOrderNumber() . "  " . $exception->getMessage());
-            dd($exception);
+            $this->logger->error(
+                sprintf('Error (%s) registering the transaction for transaction %s: %s', (string)$exception->getCode(), $transaction->getOrderTransactionId(), $exception->getMessage()),
+                ['exception' => $exception]
+            );
             throw PaymentException::asyncProcessInterrupted(
                 $transaction->getOrderTransactionId(),
                 'An error occurred during the communication with external payment gateway' . PHP_EOL . $exception->getMessage()
             );
         }
 
-        $this->eventDispatcher->dispatch(new PaymentAuthorizeResponseEvent($transaction, null, $result));
 
-        $data = $result->getPaymentId();
-
-        $this->orderTransactionRepository->upsert([[
-            'id' => $transaction->getOrderTransactionId(),
-            'customFields' => [
-                self::PAYNOW_PAYMENT_ID => $data
-            ]
-        ]], $context);
-
-        return new RedirectResponse($result->getRedirectUrl());
     }
 
     /**
@@ -114,6 +116,15 @@ class PayNowService extends AbstractPaymentHandler
         $criteria->addAssociation('order.addresses');
         $criteria->addAssociation('order.currency');
 
-        return $this->orderTransactionRepository->search($criteria, $context)->first();
+        $orderTransaction = $this->orderTransactionRepository->search($criteria, $context)->first();
+
+        if (!$orderTransaction) {
+            throw PaymentException::asyncProcessInterrupted(
+                $orderTransactionId,
+                'Order transaction not found'
+            );
+        }
+
+        return $orderTransaction;
     }
 }

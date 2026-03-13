@@ -55,11 +55,11 @@ class DebuggerSubscriber implements EventSubscriberInterface
     public function onPaymentAuthorizeResponse(PaymentAuthorizeResponseEvent $event)
     {
         if (!$this->isEnabled()) return;
-        $message = "Register response for order " . $event->getTransaction()->getOrder()->getOrderNumber() . " (" . $event->getTransaction()->getOrder()->getId() . ")";
-        $message .= " transactionId " . $event->getTransaction()->getOrderTransaction()->getId();
-        $message .= " paynowPaymentId " . $event->getAuthorize()->getPaymentId();
-        $message .= " paynowStatus " . $event->getAuthorize()->getStatus();
-        $message .= " paynowRedirectUrl " . $event->getAuthorize()->getRedirectUrl();
+        $message = "Register response for order " . $event->transaction->getOrder()->getOrderNumber() . " (" . $event->transaction->getOrder()->getId() . ")";
+        $message .= " transactionId " . $event->transaction->getOrderTransaction()->getId();
+        $message .= " paynowPaymentId " . $event->authorize->getPaymentId();
+        $message .= " paynowStatus " . $event->authorize->getStatus();
+        $message .= " paynowRedirectUrl " . $event->authorize->getRedirectUrl();
 
         $this->addClientDataAndLog($message, null);
     }

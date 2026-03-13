@@ -27,7 +27,7 @@ class TransactionDtoFactory
         $this->router = $router;
     }
 
-    public function createTransactionDto(OrderEntity $order,string $returnUrl, ?string $customerBankId, string $transactionId): TransactionDto
+    public function createTransactionDto(OrderEntity $order, string $returnUrl, ?string $customerBankId, string $transactionId): TransactionDto
     {
         $customerNumber = $order->getBillingAddress()?->getPhoneNumber();
         $orderCustomer = $order->getOrderCustomer();
@@ -63,11 +63,11 @@ class TransactionDtoFactory
             $lineItemsArray[] = $orderItem;
         }
 
-       if ($sumOrder > $order->getAmountTotal()) {
+        if ($sumOrder > $order->getAmountTotal()) {
             $lastLineItem = end($lineItemsArray);
 
             $lastLineItem->setPrice($lastLineItem->getPrice() - 1);
-       }
+        }
 
         if ($sumOrder < $order->getAmountTotal()) {
             $lastLineItem = end($lineItemsArray);
@@ -106,13 +106,23 @@ class TransactionDtoFactory
     {
         $phone = new TransactionBuyerPhoneDto();
 
-        try{
-            $number = PhoneNumber::parse($numberCustomer);
-            $phone->setPrefix("+" .$number->getCountryCode());
-            $phone->setNumber($number->getNationalNumber());
-        } catch (\Throwable $e){
-            $country = PhoneNumber::getExampleNumber($iso);
-            $phone->setPrefix("+" . $country->getCountryCode());
+        try {
+            $parsed = $iso
+                ? PhoneNumber::parse($numberCustomer, $iso)
+                : PhoneNumber::parse($numberCustomer);
+            $phone->setPrefix('+' . $parsed->getCountryCode());
+            $phone->setNumber($parsed->getNationalNumber());
+        } catch (\Throwable $e) {
+            $prefix = '';
+            if ($iso) {
+                try {
+                    $example = PhoneNumber::getExampleNumber($iso);
+                    $prefix = '+' . $example->getCountryCode();
+                } catch (\Throwable) {
+                    $prefix = '';
+                }
+            }
+            $phone->setPrefix($prefix);
             $phone->setNumber($numberCustomer);
         }
         return $phone;

@@ -10,7 +10,7 @@
             <sw-container columns="1fr 1fr" class="pay-now-header">
 
                 <div>
-                    <img class="pay-now-logo" :src="'crehlerpaynowpayment/static/img/logo_paynow.png'|asset">
+                    <img class="pay-now-logo" :src="logoUrl" alt="PayNow Logo">
                 </div>
                 <div class="sw-order-user-card__info-summary" v-if="!isLoading">
                     <div v-for="elements in listOfAmounts" class="pay-now-list-of-elements sw-order-user-card__metadata-price">
@@ -35,7 +35,7 @@
                 <dl class="sw-description-list sw-order-user-card__summary-vertical">
                     <dt>{{ $tc('pay-now-order.general.overviewLabelPaynowID') }}</dt>
                     <dd>
-                        <div class="sw-order-inline-field">{{ order.transactions[0].customFields['paynowPaymentId'] }}
+                        <div class="sw-order-inline-field">{{ order.primaryOrderTransaction.customFields['paynowPaymentId'] }}
                         </div>
                     </dd>
                 </dl>

@@ -58,6 +58,14 @@ Component.register('pay-now-order-tab', {
     },
 
     computed: {
+        assetFilter() {
+            return Shopware.Filter.getByName('asset');
+        },
+
+        logoUrl() {
+            return this.assetFilter('/crehlerpaynowpayment/logo_paynow.png');
+        },
+
         orderRepository() {
             return this.repositoryFactory.create('order');
         },
@@ -101,7 +109,7 @@ Component.register('pay-now-order-tab', {
         },
 
         shippingAddress() {
-            return this.order.deliveries.last().shippingOrderAddress;
+            return this.order.primaryOrderDelivery?.shippingOrderAddress;
         },
     },
 
@@ -318,7 +326,8 @@ Component.register('pay-now-order-tab', {
                 this.listOfAmounts.push(order.price.totalPrice)
                 this.currency = order.currency.symbol
                 this.dataSource();
-                if(order.transactions[0].customFields !== null && order.transactions[0].customFields["paynowPaymentId"] !== null){
+
+                if(order.primaryOrderTransaction?.customFields !== null && order.primaryOrderTransaction?.customFields["paynowPaymentId"] !== null){
                     this.showPayNowTab = true;
                 }
                 this.isLoading = false;
@@ -334,6 +343,9 @@ Component.register('pay-now-order-tab', {
             orderCriteria.addAssociation('deliveries');
             orderCriteria.addAssociation('deliveries.shippingMethod')
             orderCriteria.addAssociation('transactions');
+            orderCriteria.addAssociation('primaryOrderTransaction');
+            orderCriteria.addAssociation('primaryOrderDelivery');
+            orderCriteria.addAssociation('primaryOrderDelivery.shippingOrderAddress');
             orderCriteria.addAssociation('lineItems');
             orderCriteria.addAssociation('orderCustomer');
 
