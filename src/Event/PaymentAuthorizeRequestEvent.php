@@ -16,29 +16,17 @@ namespace Crehler\PayNowPayment\Event;
 use Paynow\Client;
 use Shopware\Core\Checkout\Payment\Cart\PaymentTransactionStruct;
 use Shopware\Core\Framework\Context;
-use Shopware\Core\Framework\Event\ShopwareSalesChannelEvent;
-use Shopware\Core\System\SalesChannel\SalesChannelContext;
 use Symfony\Contracts\EventDispatcher\Event;
 
-class PaymentAuthorizeRequestEvent extends Event implements ShopwareSalesChannelEvent
+class PaymentAuthorizeRequestEvent extends Event
 {
-    protected array $data;
-
-    protected ?string $idempotencyKey;
-
-    protected PaymentTransactionStruct $transaction;
-
-    protected ?SalesChannelContext $salesChannelContext;
-
-    protected Client $client;
-
-    public function __construct(PaymentTransactionStruct $transaction, ?SalesChannelContext $salesChannelContext, Client $client, array $data, ?string $idempotencyKey = null)
-    {
-        $this->transaction = $transaction;
-        $this->salesChannelContext = $salesChannelContext;
-        $this->client = $client;
-        $this->data = $data;
-        $this->idempotencyKey = $idempotencyKey;
+    public function __construct(
+        private readonly PaymentTransactionStruct $transaction,
+        private readonly Context $context,
+        private Client $client,
+        private array $data,
+        private readonly ?string $idempotencyKey = null
+    ) {
     }
 
     public function getName(): string
@@ -66,9 +54,6 @@ class PaymentAuthorizeRequestEvent extends Event implements ShopwareSalesChannel
         $this->data = $data;
     }
 
-    /**
-     * @return PaymentTransactionStruct
-     */
     public function getTransaction(): PaymentTransactionStruct
     {
         return $this->transaction;
@@ -79,16 +64,8 @@ class PaymentAuthorizeRequestEvent extends Event implements ShopwareSalesChannel
         return $this->idempotencyKey;
     }
 
-    /**
-     * @return SalesChannelContext
-     */
-    public function getSalesChannelContext(): SalesChannelContext
-    {
-        return $this->salesChannelContext;
-    }
-
     public function getContext(): Context
     {
-        return $this->salesChannelContext ? $this->salesChannelContext->getContext() : Context::createDefaultContext();
+        return $this->context;
     }
 }

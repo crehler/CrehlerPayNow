@@ -63,8 +63,10 @@ class PayNowService extends AbstractPaymentHandler
 
             $transactionDto = $this->transactionDtoFactory->createTransactionDto($order, $transaction->getReturnUrl(), $customerBankId, $transaction->getOrderTransactionId());
             $normalizedTransaction = Serializer::getSerializer()->normalize($transactionDto, 'json');
-            $this->eventDispatcher->dispatch(new PaymentAuthorizeRequestEvent($transaction, null, $this->payment->getClient(), $normalizedTransaction, $idempotencyKey));
-            $result = $this->payment->authorize($normalizedTransaction, $idempotencyKey);
+
+            $requestEvent = new PaymentAuthorizeRequestEvent($transaction, $context, $this->payment->getClient(), $normalizedTransaction, $idempotencyKey);
+            $this->eventDispatcher->dispatch($requestEvent);
+            $result = $this->payment->authorize($requestEvent->getData(), $idempotencyKey);
 
             $this->eventDispatcher->dispatch(new PaymentAuthorizeResponseEvent($transaction, $context, $result));
 
@@ -88,8 +90,6 @@ class PayNowService extends AbstractPaymentHandler
                 'An error occurred during the communication with external payment gateway' . PHP_EOL . $exception->getMessage()
             );
         }
-
-
     }
 
     /**
