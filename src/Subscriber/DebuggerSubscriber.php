@@ -13,21 +13,21 @@ namespace Crehler\PayNowPayment\Subscriber;
 use Crehler\PayNowPayment\Event\PaymentAuthorizeRequestEvent;
 use Crehler\PayNowPayment\Event\PaymentAuthorizeResponseEvent;
 use Psr\Log\LoggerInterface;
+use Shopware\Core\Checkout\Order\Aggregate\OrderTransaction\OrderTransactionEntity;
+use Shopware\Core\Framework\DataAbstractionLayer\EntityRepository;
+use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
 use Shopware\Core\System\SystemConfig\SystemConfigService;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Paynow\Client;
 
 class DebuggerSubscriber implements EventSubscriberInterface
 {
-    protected SystemConfigService $systemConfigService;
-    protected LoggerInterface $logger;
-    protected Client $client;
-
-    public function __construct(SystemConfigService $systemConfigService, LoggerInterface $logger, Client $client)
-    {
-        $this->systemConfigService = $systemConfigService;
-        $this->logger = $logger;
-        $this->client = $client;
+    public function __construct(
+        private readonly SystemConfigService $systemConfigService,
+        private readonly LoggerInterface $logger,
+        private readonly Client $client,
+        private readonly EntityRepository $orderTransactionRepository,
+    ) {
     }
 
     public static function getSubscribedEvents(): array
@@ -42,11 +42,11 @@ class DebuggerSubscriber implements EventSubscriberInterface
     {
         if (!$this->isEnabled()) return;
         $data = $this->anonymizeRequestData($event->getData());
-        $message = "Register transaction for order " . $event->getTransaction()->getOrder()->getOrderNumber() . " (" . $event->getTransaction()->getOrder()->getId() . ")";
+        $message = "Register transaction for order " . ($data['externalId'] ?? 'unknown');
         if (is_string($event->getIdempotencyKey())) {
             $message .= " idempotencyKey " . $event->getIdempotencyKey();
         }
-        $message .= " transactionId " . $event->getTransaction()->getOrderTransaction()->getId();
+        $message .= " transactionId " . $event->getTransaction()->getOrderTransactionId();
         $message .= " data: " . json_encode($data);
 
         $this->addClientDataAndLog($message, $event->getClient());
@@ -55,8 +55,18 @@ class DebuggerSubscriber implements EventSubscriberInterface
     public function onPaymentAuthorizeResponse(PaymentAuthorizeResponseEvent $event)
     {
         if (!$this->isEnabled()) return;
-        $message = "Register response for order " . $event->transaction->getOrder()->getOrderNumber() . " (" . $event->transaction->getOrder()->getId() . ")";
-        $message .= " transactionId " . $event->transaction->getOrderTransaction()->getId();
+
+        $criteria = new Criteria([$event->transaction->getOrderTransactionId()]);
+        $criteria->addAssociation('order');
+        /** @var OrderTransactionEntity|null $orderTransaction */
+        $orderTransaction = $this->orderTransactionRepository->search($criteria, $event->context)->first();
+
+        if ($orderTransaction !== null) {
+            $message = "Register response for order " . $orderTransaction->getOrder()->getOrderNumber();
+        } else {
+            $message = "Register response for transactionId " . $event->transaction->getOrderTransactionId();
+        }
+        $message .= " transactionId " . $event->transaction->getOrderTransactionId();
         $message .= " paynowPaymentId " . $event->authorize->getPaymentId();
         $message .= " paynowStatus " . $event->authorize->getStatus();
         $message .= " paynowRedirectUrl " . $event->authorize->getRedirectUrl();

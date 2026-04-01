@@ -25,7 +25,7 @@ class CartSubscriber implements EventSubscriberInterface
     }
 
 
-    public static function getSubscribedEvents()
+    public static function getSubscribedEvents(): array
     {
         return [CartVerifyPersistEvent::class => ['onChartChange', 999]];
     }

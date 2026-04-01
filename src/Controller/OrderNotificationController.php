@@ -137,11 +137,6 @@ class OrderNotificationController extends AbstractController
         $orderTransaction = $this->orderTransactionRepository->search($orderTransactionCriteria, Context::createDefaultContext())->first();
         $orderTransactionId = $orderTransaction->getId();
 
-        if ($orderToUpdate->getAmountTotal() == 1090.31 && $this->systemConfigService->get('CrehlerPayNowPayment.config.EnableSandbox')) {
-            $this->orderTransactionStateHandler->cancel($orderTransactionId, Context::createDefaultContext());
-            return OrderNotificationStates::STATE_ACCEPTED;
-        }
-
         try {
             switch ($status) {
                 case "CONFIRMED":
@@ -154,7 +149,7 @@ class OrderNotificationController extends AbstractController
                     return OrderNotificationStates::STATE_ACCEPTED;
             }
         } catch (\Throwable $e) {
-            $this->logger->info('PAYNOW_ MNA ERROR' . $orderTransaction->getOrder()->getOrderNumber() . $e->getMessage());
+            $this->logger->info('PAYNOW_ MNA ERROR ' . $orderToUpdate->getOrderNumber() . ' ' . $e->getMessage());
             return OrderNotificationStates::STATE_EXCEPTION;
         }
 
