@@ -16,9 +16,8 @@ export default class PayNowPaymentCheckPlugin extends Plugin {
         this._errors = [];
         this._client = new HttpClient();
         this.checksCount = 0;
-        const waitingTime = 0;
         this._getConfig();
-        this.totalChecksCount = Math.floor(waitingTime/10);
+        this.totalChecksCount = Math.max(1, Math.ceil(this.waitingTime / 10));
         this._checkOrderPayment();
         this._checkPaymentStateInterval();
     }
@@ -39,12 +38,13 @@ export default class PayNowPaymentCheckPlugin extends Plugin {
     }
 
     _loop() {
-        this._checkOrderPayment();
         if (this.checksCount >= this.totalChecksCount) {
             clearInterval(this.loopInterval);
             this._changeButtonText(this.options.waitingFailText);
             this._changeLocation(this.options.failUrl);
+            return;
         }
+        this._checkOrderPayment();
     }
 
     _checkOrderPayment() {

@@ -2,6 +2,7 @@
 
 namespace Crehler\PayNowPayment\Service;
 
+use Crehler\PayNowPayment\CrehlerPayNowPayment;
 use Crehler\PayNowPayment\Event\PaymentAuthorizeRequestEvent;
 use Crehler\PayNowPayment\Event\PaymentAuthorizeResponseEvent;
 use Monolog\Logger;
@@ -11,6 +12,7 @@ use Crehler\PayNowPayment\Factory\TransactionDtoFactory;
 use Psr\Log\LoggerInterface;
 use Shopware\Core\Checkout\Cart\SalesChannel\CartService;
 use Shopware\Core\Checkout\Order\Aggregate\OrderTransaction\OrderTransactionEntity;
+use Shopware\Core\Checkout\Order\OrderEntity;
 use Shopware\Core\Checkout\Payment\Cart\PaymentHandler\AbstractPaymentHandler;
 use Shopware\Core\Checkout\Payment\Cart\PaymentHandler\PaymentHandlerType;
 use Shopware\Core\Checkout\Payment\Cart\PaymentTransactionStruct;
@@ -34,6 +36,7 @@ class PayNowService extends AbstractPaymentHandler
         private readonly PayNowServicesFactory    $factory,
         private readonly TransactionDtoFactory    $transactionDtoFactory,
         private readonly EntityRepository         $orderTransactionRepository,
+        private readonly EntityRepository         $customerRepository,
         private readonly EventDispatcherInterface $eventDispatcher,
         private readonly IdempotencyKeyGenerator  $idempotencyKeyGenerator,
     )
@@ -54,12 +57,7 @@ class PayNowService extends AbstractPaymentHandler
             $idempotencyKey = $this->idempotencyKeyGenerator->generate($orderTransaction, $context);
             $order = $orderTransaction->getOrder();
 
-            $customer = $order->getOrderCustomer();
-
-            $customerBankId = null;
-            if ($customer && isset($customer->getCustomFields()['pay_now_default_payment_selected_bank'])) {
-                $customerBankId = $customer->getCustomFields()['pay_now_default_payment_selected_bank'];
-            }
+            $customerBankId = $this->resolveSelectedBankId($order, $context);
 
             $transactionDto = $this->transactionDtoFactory->createTransactionDto($order, $transaction->getReturnUrl(), $customerBankId, $transaction->getOrderTransactionId());
             $normalizedTransaction = Serializer::getSerializer()->normalize($transactionDto, 'json');
@@ -126,5 +124,34 @@ class PayNowService extends AbstractPaymentHandler
         }
 
         return $orderTransaction;
+    }
+
+    /**
+     * Resolves the bank/payment method selected for this order. The selection is stored on the
+     * live customer entity by CustomerSetDefaultBankSubscriber, so on a payment retry we must read
+     * it from there rather than from the order's frozen orderCustomer snapshot (which keeps the
+     * bank chosen at order placement time and would otherwise reopen the old method).
+     */
+    private function resolveSelectedBankId(OrderEntity $order, Context $context): ?string
+    {
+        $key = CrehlerPayNowPayment::CUSTOMER_CUSTOM_FIELDS_PAY_NOW_SELECTED_BANK;
+        $orderCustomer = $order->getOrderCustomer();
+        $customerId = $orderCustomer?->getCustomerId();
+
+        if ($customerId) {
+            $customer = $this->customerRepository->search(new Criteria([$customerId]), $context)->first();
+            $customerCustomFields = $customer?->getCustomFields();
+            if (isset($customerCustomFields[$key])) {
+                return (string) $customerCustomFields[$key];
+            }
+        }
+
+        // Fallback for guests (no live customer): use the order snapshot.
+        $orderCustomerCustomFields = $orderCustomer?->getCustomFields();
+        if (isset($orderCustomerCustomFields[$key])) {
+            return (string) $orderCustomerCustomFields[$key];
+        }
+
+        return null;
     }
 }

@@ -4,6 +4,8 @@ import './sw-order.scss';
 const { Component, Context } = Shopware;
 const { Criteria } = Shopware.Data;
 
+const PAYNOW_HANDLER = 'Crehler\\PayNowPayment\\Service\\PayNowService';
+
 Component.override('sw-order-detail', {
     template,
 
@@ -43,9 +45,7 @@ Component.override('sw-order-detail', {
 
             const orderRepository = this.repositoryFactory.create('order');
             const orderCriteria = new Criteria(1, 1);
-            orderCriteria.addAssociation('transactions');
-
-            // orderCriteria.addFilter(Criteria.equals('transactions.paymentMethodId','7747a44c8f69418c99bf55748775b6561'));
+            orderCriteria.addAssociation('transactions.paymentMethod');
             orderCriteria.addFilter(Criteria.equals('id', orderId));
 
             orderRepository.search(orderCriteria, Context.api).then((searchResult) => {
@@ -59,9 +59,9 @@ Component.override('sw-order-detail', {
                     this.identifier = order.orderNumber;
                 }
 
-                order.transactions.forEach((orderTransaction) => {
-                        this.payNowTransactions.push(orderTransaction);
-                });
+                this.payNowTransactions = order.transactions.filter(
+                    (orderTransaction) => orderTransaction.paymentMethod?.handlerIdentifier === PAYNOW_HANDLER,
+                );
             }).finally(() => {
                 this.isLoadingPayNowTransactions = false;
             });

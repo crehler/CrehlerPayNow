@@ -2,6 +2,8 @@ services:
   _defaults:
     autowire: true
     autoconfigure: true
+    bind:
+      $logger: '@monolog.logger.crehler_paynow_handler'
 
   Crehler\PayNowPayment\:
     resource: '../../../src/'

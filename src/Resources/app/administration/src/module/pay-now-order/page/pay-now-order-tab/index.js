@@ -4,6 +4,8 @@ import './pay-now-order-tab.scss';
 const {Component, Mixin, Context} = Shopware;
 const Criteria = Shopware.Data.Criteria;
 
+const PAYNOW_HANDLER = 'Crehler\\PayNowPayment\\Service\\PayNowService';
+
 Component.register('pay-now-order-tab', {
     template,
 
@@ -327,9 +329,9 @@ Component.register('pay-now-order-tab', {
                 this.currency = order.currency.symbol
                 this.dataSource();
 
-                if(order.primaryOrderTransaction?.customFields !== null && order.primaryOrderTransaction?.customFields["paynowPaymentId"] !== null){
-                    this.showPayNowTab = true;
-                }
+                this.showPayNowTab = (order.transactions?.some(
+                    (transaction) => transaction.paymentMethod?.handlerIdentifier === PAYNOW_HANDLER
+                )) ?? false;
                 this.isLoading = false;
             });
 
@@ -342,8 +344,8 @@ Component.register('pay-now-order-tab', {
             orderCriteria.addAssociation('currency');
             orderCriteria.addAssociation('deliveries');
             orderCriteria.addAssociation('deliveries.shippingMethod')
-            orderCriteria.addAssociation('transactions');
-            orderCriteria.addAssociation('primaryOrderTransaction');
+            orderCriteria.addAssociation('transactions.paymentMethod');
+            orderCriteria.addAssociation('primaryOrderTransaction.paymentMethod');
             orderCriteria.addAssociation('primaryOrderDelivery');
             orderCriteria.addAssociation('primaryOrderDelivery.shippingOrderAddress');
             orderCriteria.addAssociation('lineItems');

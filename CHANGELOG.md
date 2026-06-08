@@ -1,3 +1,10 @@
+# 4.0.4
+- Fix logger writing to the dedicated paynow channel
+- Respect the configured Waiting Time before redirecting on payment check
+- Use the selected payment method on payment retry
+- Show the paynow admin tab for paynow-paid orders
+- Even out bank tiles in the level-zero list
+
 # 1.1.1
 - Upgrade source code
 
